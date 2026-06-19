@@ -70,3 +70,14 @@ class ProductRepository:
             ProductMapper.from_row(row)
             for row in rows
         ]
+    
+    def get_by_id(self, product_id: int):
+        query = "SELECT * FROM products WHERE id = ?"
+
+        self.database.cursor.execute(query, (product_id,))
+        row = self.database.cursor.fetchone()
+
+        if not row:
+            return None
+
+        return dict(row)
