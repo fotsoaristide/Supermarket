@@ -4,6 +4,10 @@ from services.product_service import ProductService
 from views.menu_view import MenuView
 from controllers.product_controller import ProductController
 from controllers.menu_controller import MenuController
+from repositories.sale_repository import SaleRepository
+from services.sale_service import SaleService
+from controllers.sale_controller import SaleController
+from views.sale_view import SaleView
 
 
 class Container:
@@ -32,6 +36,23 @@ class Container:
         self.menu_controller = MenuController(
             self.menu_view,
             self.product_controller
+        )
+        # =====================
+        # SALES MODULE
+        # =====================
+
+        self.sale_repository = SaleRepository(self.database)
+
+        self.sale_service = SaleService(
+            self.sale_repository,
+            self.product_repository
+       )
+
+        self.sale_view = SaleView()
+
+        self.sale_controller = SaleController(
+            self.sale_service,
+            self.sale_view
         )
 
     @property
