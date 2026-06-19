@@ -61,7 +61,7 @@ class MenuView:
             print("No products registered.")
             return
 
-        print(f"{'ID':<5}{'CODE':<15}{'NOM':<25}{'PRIX':<12}{'STOCK'}")
+        print(f"{'ID':<5}{'BARCODE':<15}{'NOM':<25}{'PRIX':<12}{'STOCK':<10}")
         print("-" * 70)
 
         for product in products:
@@ -73,9 +73,34 @@ class MenuView:
                 f"{product.selling_price:<12.2f}"
                 f"{product.quantity:<10}"
             )
-
+    
+    
     def invalid_choice(self):
         print("\nInvalid choice.")
+
+    def get_update_product_info(self):
+        print("\n===== UPDATE PRODUCT =====")
+
+        product_id = int(input("Product ID: "))
+        barcode = input("Barcode: ")
+        name = input("Name: ")
+        category = input("Category: ")
+
+        purchase_price = float(input("Purchase Price: "))
+        selling_price = float(input("Selling Price: "))
+        quantity = int(input("Quantity: "))
+        minimum_stock = int(input("Minimum Stock: "))
+
+        return (
+            product_id,
+            barcode,
+            name,
+            category,
+            purchase_price,
+            selling_price,
+            quantity,
+            minimum_stock
+        )
 
     def goodbye(self):
         print("\nThank you for using the software.")

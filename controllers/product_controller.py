@@ -85,3 +85,32 @@ class ProductController:
                 f"{product.selling_price} FCFA | "
                 f"Stock: {product.quantity}"
             )
+    def update_product(self):
+
+        (
+            product_id,
+            barcode,
+            name,
+            category,
+            purchase_price,
+            selling_price,
+            quantity,
+            minimum_stock
+        ) = self.view.get_update_product_info()
+
+        product = Product(
+            id=product_id,
+            barcode=barcode,
+            name=name,
+            category=category,
+            purchase_price=purchase_price,
+            selling_price=selling_price,
+            quantity=quantity,
+            minimum_stock=minimum_stock
+        )
+
+        try:
+            self.service.update_product(product)
+            self.view.success_message()
+        except ValueError as error:
+            self.view.error_message(str(error))

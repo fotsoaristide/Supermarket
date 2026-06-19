@@ -29,6 +29,17 @@ class ProductService:
 
     def search_products(self, keyword: str):
         return self.repository.search(keyword)
+    
+    def update_product(self, product):
+        if product.purchase_price < 0:
+            raise ValueError("Purchase price must be positive")
+
+        if product.selling_price < 0:
+            raise ValueError("Selling price must be positive")
+
+        if product.quantity < 0:
+            raise ValueError("Quantity cannot be negative")
+        self.repository.update_product(product)
 
     def get_all_products(self):
         return self.repository.get_all_products()

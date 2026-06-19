@@ -121,6 +121,34 @@ class ProductRepository:
             ProductMapper.from_row(row)
             for row in rows
         ]
+
+    def update_product(self, product):
+        query = """
+            UPDATE products
+            SET barcode = ?,
+                name = ?,
+                category = ?,
+                purchase_price = ?,
+                selling_price = ?,
+                quantity = ?,
+                minimum_stock = ?,
+                updated_at = ?
+            WHERE id = ?
+        """
+        self.database.cursor.execute(
+            query,
+            (
+                product.barcode,
+                product.name,
+                product.category,
+                product.purchase_price,
+                product.selling_price,
+                product.quantity,
+                product.minimum_stock,
+                datetime.now().isoformat(),
+                product.id
+            )
+        )
     
     def decrease_stock(self, product_id: int, quantity: int):
         """
