@@ -10,23 +10,20 @@ class Container:
 
     def __init__(self):
 
-        # Infrastructure
         self.database = Database()
+        self.database.init_db()
 
-        # Repositories
+
         self.product_repository = ProductRepository(
             self.database
         )
 
-        # Services
         self.product_service = ProductService(
             self.product_repository
         )
 
-        # Views
         self.menu_view = MenuView()
 
-        # Controllers
         self.product_controller = ProductController(
             self.product_service,
             self.menu_view
