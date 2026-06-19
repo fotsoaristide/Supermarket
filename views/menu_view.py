@@ -1,18 +1,23 @@
 class MenuView:
 
-    def show_menu(self):
+    def display_menu(self):
         print("\n" + "=" * 50)
-        print("       SUPERMARKET STOCK MANAGEMENT         ")
+        print("       SUPERMARKET STOCK MANAGEMENT")
         print("=" * 50)
         print("1. Add Product")
         print("2. Display Products")
         print("3. Search Product")
         print("4. Update Product")
         print("5. Delete Product")
-        print("6. Quit")
+        print("6. New Sale")
+        print("7. Quit")
+        print("=" * 50)
 
+    def get_choice(self):
         return input("\nYour choice : ")
-
+    
+    def show_error(self, message):
+        print(f"\nError: {message}")
 
     def get_product_information(self):
         print("\n===== ADD  A PRODUCT =====")
@@ -50,10 +55,10 @@ class MenuView:
 
     def display_products(self, products):
 
-        print("\n===== LISTE DES PRODUITS =====")
+        print("\n===== PRODUCTS LIST =====")
 
         if not products:
-            print("Aucun produit enregistré.")
+            print("No products registered.")
             return
 
         print(f"{'ID':<5}{'CODE':<15}{'NOM':<25}{'PRIX':<12}{'STOCK'}")

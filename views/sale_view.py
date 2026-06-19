@@ -8,10 +8,10 @@ class SaleView:
     # INPUTS
     # =========================
     def get_product_id(self):
-        return int(input("Scanner produit (ID): "))
+        return int(input("Product scanner (ID): "))
 
     def get_quantity(self):
-        return int(input("Quantité: "))
+        return int(input("Quantity: "))
 
     # =========================
     # MESSAGES
@@ -20,7 +20,7 @@ class SaleView:
         print(f"[INFO] {message}")
 
     def show_error(self, message):
-        print(f"[ERREUR] {message}")
+        print(f"[ERROR] {message}")
 
     # =========================
     # DISPLAY SALE
@@ -30,7 +30,7 @@ class SaleView:
         items = sale_data["items"]
 
         print("\n" + "=" * 40)
-        print(f"VENTE ID: {sale['id']}")
+        print(f"SALE ID: {sale['id']}")
         print(f"DATE: {sale['created_at']}")
         print("-" * 40)
 
@@ -49,7 +49,7 @@ class SaleView:
     # =========================
     def show_sale_menu(self):
         print("\n===== CAISSE =====")
-        print("1. Ajouter produit")
-        print("2. Voir panier")
-        print("3. Terminer vente")
-        print("4. Annuler")
+        print("1. Add product")
+        print("2. View cart")
+        print("3. End sale")
+        print("4. Cancel")

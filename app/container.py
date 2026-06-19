@@ -17,10 +17,7 @@ class Container:
         self.database = Database()
         self.database.init_db()
 
-
-        self.product_repository = ProductRepository(
-            self.database
-        )
+        self.product_repository = ProductRepository(self.database)
 
         self.product_service = ProductService(
             self.product_repository
@@ -33,26 +30,24 @@ class Container:
             self.menu_view
         )
 
-        self.menu_controller = MenuController(
-            self.menu_view,
-            self.product_controller
-        )
-        # =====================
-        # SALES MODULE
-        # =====================
-
         self.sale_repository = SaleRepository(self.database)
 
         self.sale_service = SaleService(
             self.sale_repository,
             self.product_repository
-       )
+        )
 
         self.sale_view = SaleView()
 
         self.sale_controller = SaleController(
             self.sale_service,
             self.sale_view
+        )
+
+        self.menu_controller = MenuController(
+            self.menu_view,
+            self.product_controller,
+            self.sale_controller
         )
 
     @property
