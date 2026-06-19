@@ -29,20 +29,21 @@ class SaleView:
         sale = sale_data["sale"]
         items = sale_data["items"]
 
-        print("\n" + "=" * 40)
-        print(f"SALE ID: {sale['id']}")
+        print("\n" + "=" * 50)
+        print(f"Sale ID: {sale['id']}")
         print(f"DATE: {sale['created_at']}")
-        print("-" * 40)
+        print("-" * 50)
 
         for item in items:
-            print(
-                f"{item['product_name']} x{item['quantity']} "
-                f"= {item['subtotal']} FCFA"
-            )
+            name = item["product_name"]
+            qty = item["quantity"]
+            unit = item["unit_price"]
+            subtotal = item["subtotal"]
+            print(f"{name:<15} x{qty:<3} {unit:>6} FCFA  => {subtotal:>6} FCFA")
 
-        print("-" * 40)
-        print(f"TOTAL: {sale['total']} FCFA")
-        print("=" * 40 + "\n")
+        print("-" * 50)
+        print(f"{'TOTAL':<25} {sale['total']} FCFA")
+        print("=" * 50 + "\n")
 
     # =========================
     # MENU SALE (optionnel mais utile)
