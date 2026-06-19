@@ -21,8 +21,16 @@ class Database:
         self.cursor.execute(SALE_ITEMS_TABLE)
         self.connection.commit()
 
+    def begin(self):
+        """Start a database transaction."""
+        self.connection.execute("BEGIN")
+
     def commit(self):
         self.connection.commit()
+
+    def rollback(self):
+        """Rollback current transaction."""
+        self.connection.rollback()
 
     def close(self):
         self.connection.close()

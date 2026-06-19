@@ -1,5 +1,5 @@
 """inventory management repository module"""
-
+from datetime import datetime
 from mappers.product_mapper import ProductMapper
 
 class ProductRepository:
@@ -32,7 +32,6 @@ class ProductRepository:
                 updated_at TEXT
             )
         """)
-        self.database.commit()
 
     def add_product(self, product):
         self.database.cursor.execute("""
@@ -58,7 +57,6 @@ class ProductRepository:
             product.created_at,
             product.updated_at
         ))
-        self.database.commit()
 
     def get_all_products(self):
 
@@ -70,14 +68,98 @@ class ProductRepository:
             ProductMapper.from_row(row)
             for row in rows
         ]
-    
+
+
     def get_by_id(self, product_id: int):
-        query = "SELECT * FROM products WHERE id = ?"
+        query = """
+            SELECT *
+             FROM products
+            WHERE id = ?
+        """
 
         self.database.cursor.execute(query, (product_id,))
         row = self.database.cursor.fetchone()
 
-        if not row:
+        if row is None:
             return None
 
-        return dict(row)
+        return ProductMapper.from_row(row)
+    
+    def get_by_barcode(self, barcode: str):
+        query = """
+            SELECT *
+            FROM products
+            WHERE barcode = ?
+        """
+        self.database.cursor.execute(query, (barcode,))
+        row = self.database.cursor.fetchone()
+
+        if row is None:
+            return None
+
+        return ProductMapper.from_row(row)
+
+    def search(self, keyword: str):
+        like_keyword = f"%{keyword}%"
+
+        query = """
+            SELECT *
+            FROM products
+            WHERE name LIKE ?
+            OR barcode LIKE ?
+            OR category LIKE ?
+        """
+
+        self.database.cursor.execute(
+            query,
+            (like_keyword, like_keyword, like_keyword)
+        )
+
+        rows = self.database.cursor.fetchall()
+
+        return [
+            ProductMapper.from_row(row)
+            for row in rows
+        ]
+    
+    def decrease_stock(self, product_id: int, quantity: int):
+        """
+        Decrease the stock of a product.
+
+        Raises:
+            ValueError: if the product does not exist.
+            ValueError: if there is not enough stock.
+        """
+
+        product = self.get_by_id(product_id)
+
+        if product is None:
+            raise ValueError("Product not found.")
+
+        if quantity <= 0:
+            raise ValueError("Quantity must be greater than zero.")
+        if product.quantity < quantity:
+            raise ValueError(
+                f"Insufficient stock for '{product.name}'. "
+                f"Available: {product.quantity}"
+            )
+
+        new_quantity = product.quantity - quantity
+
+        query = """
+            UPDATE products
+            SET quantity = ?,
+                updated_at = ?
+            WHERE id = ?
+        """
+
+        self.database.cursor.execute(
+            query,
+            (
+                new_quantity,
+                datetime.now().isoformat(),
+                product_id
+            )
+        )
+
+        return new_quantity

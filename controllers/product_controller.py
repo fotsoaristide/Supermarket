@@ -43,3 +43,45 @@ class ProductController:
         products = self.service.get_all_products()
 
         self.view.display_products(products)
+
+    def search_product(self):
+        keyword = input("Enter keyword (name/barcode/category): ")
+
+        results = self.service.search_products(keyword)
+
+        if not results:
+            self.view.show_error("No product found.")
+            return
+
+        self.view.display_products(results)
+
+    def search_by_barcode(self):
+        barcode = input("Scan / Enter barcode: ")
+
+        product = self.service.get_product_by_barcode(barcode)
+
+        if not product:
+            self.view.show_error("Product not found.")
+            return
+
+        self.view.display_products([product])
+
+    def scan_mode(self):
+        print("\n=== SCAN MODE (type 'exit' to stop) ===")
+
+        while True:
+            barcode = input("Scan barcode: ")
+
+            if barcode.lower() == "exit":
+                break
+            product = self.service.get_product_by_barcode(barcode)
+
+            if not product:
+                self.view.show_error("Product not found.")
+                continue
+
+            print(
+                f"{product.name} | "
+                f"{product.selling_price} FCFA | "
+                f"Stock: {product.quantity}"
+            )

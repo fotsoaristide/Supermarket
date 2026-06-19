@@ -25,7 +25,6 @@ class SaleRepository:
         )
 
         self.db.cursor.execute(query, params)
-        self.db.commit()
 
         return self.db.cursor.lastrowid
 
@@ -54,8 +53,6 @@ class SaleRepository:
                 subtotal
             )
         )
-
-        self.db.commit()
 
     # =========================
     # GET SALE ITEMS
@@ -92,4 +89,3 @@ class SaleRepository:
         """
 
         self.db.cursor.execute(query, (total, sale_id))
-        self.db.commit()

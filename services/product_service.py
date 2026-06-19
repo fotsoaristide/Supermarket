@@ -10,19 +10,25 @@ class ProductService:
      
         if product.purchase_price < 0:
             raise ValueError(
-                "Le prix d'achat doit être positif."
+                "The purchase price must be a positive value."
             )
 
         if product.selling_price < 0:
             raise ValueError(
-                "Le prix de vente doit être positif."
+                "The selling price must be a positive value."
             )
 
         if product.quantity < 0:
             raise ValueError(
-                "La quantité ne peut pas être négative."
+                "The quantity cannot be negative."
             )
         self.repository.add_product(product)
+
+    def get_product_by_barcode(self, barcode: str):
+        return self.repository.get_by_barcode(barcode)
+
+    def search_products(self, keyword: str):
+        return self.repository.search(keyword)
 
     def get_all_products(self):
         return self.repository.get_all_products()
