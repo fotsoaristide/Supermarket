@@ -57,6 +57,7 @@ class ProductRepository:
             product.created_at,
             product.updated_at
         ))
+        self.database.connection.commit()
 
     def get_all_products(self):
 
@@ -128,7 +129,8 @@ class ProductRepository:
             WHERE id = ?
         """
         self.database.cursor.execute(query, (product_id,))
-        
+        self.database.connection.commit()
+
     def update_product(self, product):
         query = """
             UPDATE products
@@ -156,6 +158,7 @@ class ProductRepository:
                 product.id
             )
         )
+        self.database.connection.commit()
     
     def decrease_stock(self, product_id: int, quantity: int):
         """
