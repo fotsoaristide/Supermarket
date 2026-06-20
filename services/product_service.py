@@ -23,7 +23,6 @@ class ProductService:
             raise ValueError(
                 "The quantity cannot be negative."
             )
-        self.database.begin()
 
         try:
             self.repository.add_product(product)
@@ -44,8 +43,6 @@ class ProductService:
         if product_id <= 0:
             raise ValueError("Invalid product ID")
 
-        self.database.begin()
-
         try:
             self.repository.delete_product(product_id)
             self.database.commit()
@@ -63,7 +60,6 @@ class ProductService:
         if product.quantity < 0:
             raise ValueError("Quantity cannot be negative")
         
-        self.database.begin()
         try:
             self.repository.update_product(product)
             self.database.commit()

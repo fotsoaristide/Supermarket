@@ -89,3 +89,18 @@ class SaleRepository:
         """
 
         self.db.cursor.execute(query, (total, sale_id))
+
+    def complete_sale(self, sale_id):
+        query = """
+            UPDATE sales
+            SET status = ?
+            WHERE id = ?
+        """
+
+        self.db.cursor.execute(
+            query,
+            (
+                "COMPLETED",
+                sale_id
+            )
+        )

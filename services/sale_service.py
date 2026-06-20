@@ -7,6 +7,8 @@ class SaleService:
         self.sale_repository = sale_repository
         self.product_repository = product_repository
 
+        self.database = sale_repository.db
+
         self.current_sale_id = None
 
     # =========================
@@ -33,9 +35,9 @@ class SaleService:
         product = self.product_repository.get_by_id(product_id)
 
         if not product:
-            raise Exception("Product not found.")
+            product = self.product_repository.get_by_barcode(product_id)
 
-        unit_price = product.price
+        unit_price = product.selling_price
         product_name = product.name
 
         self.sale_repository.add_item(
@@ -89,8 +91,39 @@ class SaleService:
     # =========================
     def end_sale(self):
         """
-        Finalize sale.
+        Finalize sale safely with stock update.
         """
-        total = self.recalculate_total()
-        self.current_sale_id = None
-        return total
+
+        if self.current_sale_id is None:
+            raise Exception("No active sale.")
+
+        try:
+            # 1. récupérer les items
+            items = self.sale_repository.get_sale_items(self.current_sale_id)
+
+            if not items:
+                raise Exception("Cannot finalize empty sale.")
+
+            # 2. vérifier stock + décrémenter
+            for item in items:
+                self.product_repository.decrease_stock(
+                    item["product_id"],
+                    item["quantity"]
+                )
+
+            # 3. marquer vente comme terminée
+            self.sale_repository.complete_sale(self.current_sale_id)
+
+            # 4. commit global
+            self.database.commit()
+
+            total = self.recalculate_total()
+
+            # 5. reset session
+            self.current_sale_id = None
+
+            return total
+
+        except Exception as e:
+            self.database.rollback()
+            raise e

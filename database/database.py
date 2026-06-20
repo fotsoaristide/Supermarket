@@ -16,7 +16,7 @@ class Database:
 
         database_path = Path(__file__).parent / db_name
 
-        self.connection = sqlite3.connect(database_path)
+        self.connection = sqlite3.connect(database_path, isolation_level=None)
         self.connection.row_factory = sqlite3.Row
         self.cursor = self.connection.cursor()
 
