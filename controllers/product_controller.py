@@ -85,6 +85,17 @@ class ProductController:
                 f"{product.selling_price} FCFA | "
                 f"Stock: {product.quantity}"
             )
+
+    def delete_product(self):
+
+        product_id = self.view.get_delete_product_id()
+
+        try:
+            self.service.delete_product(product_id)
+            print("\nProduct deleted successfully.")
+        except ValueError as error:
+            self.view.error_message(str(error))
+            
     def update_product(self):
 
         (

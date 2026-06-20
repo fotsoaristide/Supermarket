@@ -121,7 +121,14 @@ class ProductRepository:
             ProductMapper.from_row(row)
             for row in rows
         ]
-
+    
+    def delete_product(self, product_id: int):
+        query = """
+            DELETE FROM products
+            WHERE id = ?
+        """
+        self.database.cursor.execute(query, (product_id,))
+        
     def update_product(self, product):
         query = """
             UPDATE products

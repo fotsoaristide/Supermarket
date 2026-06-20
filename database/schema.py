@@ -21,3 +21,17 @@ CREATE TABLE IF NOT EXISTS sale_items (
     FOREIGN KEY (sale_id) REFERENCES sales(id)
 );
 """
+PRODUCTS_TABLE = """
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    barcode TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    category TEXT,
+    purchase_price REAL NOT NULL,
+    selling_price REAL NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 0,
+    minimum_stock INTEGER DEFAULT 5,
+    created_at TEXT,
+    updated_at TEXT
+)
+"""

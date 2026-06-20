@@ -2,7 +2,11 @@
 
 from pathlib import Path
 import sqlite3
-from database.schema import SALES_TABLE, SALE_ITEMS_TABLE
+from database.schema import (
+    PRODUCTS_TABLE,
+    SALES_TABLE,
+    SALE_ITEMS_TABLE
+)
 
 
 class Database:
@@ -17,6 +21,7 @@ class Database:
         self.cursor = self.connection.cursor()
 
     def init_db(self):
+        self.cursor.execute(PRODUCTS_TABLE)
         self.cursor.execute(SALES_TABLE)
         self.cursor.execute(SALE_ITEMS_TABLE)
         self.connection.commit()

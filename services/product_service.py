@@ -30,6 +30,13 @@ class ProductService:
     def search_products(self, keyword: str):
         return self.repository.search(keyword)
     
+    def delete_product(self, product_id: int):
+
+        if product_id <= 0:
+            raise ValueError("Invalid product ID")
+
+        self.repository.delete_product(product_id)
+    
     def update_product(self, product):
         if product.purchase_price < 0:
             raise ValueError("Purchase price must be positive")

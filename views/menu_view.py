@@ -78,6 +78,10 @@ class MenuView:
     def invalid_choice(self):
         print("\nInvalid choice.")
 
+    def get_delete_product_id(self):
+        print("\n===== DELETE PRODUCT =====")
+        return int(input("Enter Product ID to delete: "))
+
     def get_update_product_info(self):
         print("\n===== UPDATE PRODUCT =====")
 
