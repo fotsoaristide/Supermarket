@@ -85,6 +85,55 @@ class SaleService:
             "sale": sale,
             "items": items,
         }
+    
+    def update_item_quantity(
+        self,
+        product_id,
+        new_quantity
+    ):
+        """
+        Update the quantity of an item in the current sale.
+        """
+
+        if self.current_sale_id is None:
+            raise Exception("No active sale.")
+
+        if new_quantity <= 0:
+            raise ValueError(
+                "Quantity must be greater than zero."
+            )
+
+        sale_item = self.sale_repository.get_sale_item(
+            self.current_sale_id,
+            product_id
+        )
+
+        if sale_item is None:
+            raise ValueError(
+                "Product is not in the current sale."
+            )
+
+        product = self.product_repository.get_by_id(product_id)
+
+        if product is None:
+            raise ValueError(
+                "Product not found."
+            )
+
+        if new_quantity > product.quantity:
+            raise ValueError(
+                f"Insufficient stock. Available: {product.quantity}"
+            )
+
+        subtotal = new_quantity * sale_item["unit_price"]
+
+        self.sale_repository.update_item_quantity(
+            self.current_sale_id,
+            product_id,
+            new_quantity,
+            subtotal
+        )
+        return self.recalculate_total()
 
     # =========================
     # END SALE
@@ -127,3 +176,12 @@ class SaleService:
         except Exception as e:
             self.database.rollback()
             raise e
+        
+    def get_all_sales(self):
+        return self.sale_repository.get_all_sales()
+    
+    def get_completed_sales(self):
+        return self.sale_repository.get_completed_sales()
+    
+    def get_sale_details(self, sale_id):
+        return self.sale_repository.get_sale_with_items(sale_id)

@@ -60,3 +60,25 @@ class SaleController:
 
         except Exception as e:
             self.sale_view.show_error(str(e))
+
+    def update_item_quantity(self):
+        """
+        Update the quantity of a product in the current sale.
+        """
+
+        product_id = self.sale_view.get_update_product_id()
+        new_quantity = self.sale_view.get_new_quantity()
+        try:
+            self.sale_service.update_item_quantity(
+                product_id,
+                new_quantity
+            )
+
+            self.sale_view.show_message(
+                "Quantity updated successfully."
+            )
+
+            self.show_current_sale()
+
+        except Exception as e:
+            self.sale_view.show_error(str(e))

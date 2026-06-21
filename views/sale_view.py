@@ -49,8 +49,22 @@ class SaleView:
     # MENU SALE (optionnel mais utile)
     # =========================
     def show_sale_menu(self):
-        print("\n===== CAISSE =====")
+        print("\n===== SALE MENU =====")
         print("1. Add product")
         print("2. View cart")
-        print("3. End sale")
-        print("4. Cancel")
+        print("3. Update quantity")
+        print("4. Remove product")
+        print("5. Cancel sale")
+        print("6. Complete sale")
+    
+    def get_update_product_id(self):
+        """
+        Ask the user for the product ID to update.
+        """
+        return int(input("Product ID: "))
+    
+    def get_new_quantity(self):
+        """
+        Ask the user for the new quantity.
+        """
+        return int(input("New quantity: "))

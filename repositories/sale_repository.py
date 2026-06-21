@@ -104,3 +104,87 @@ class SaleRepository:
                 sale_id
             )
         )
+
+    def get_all_sales(self):
+        query = """
+            SELECT *
+            FROM sales
+            ORDER BY created_at DESC
+        """
+
+        self.db.cursor.execute(query)
+        rows = self.db.cursor.fetchall()
+
+        return rows
+    
+    def get_completed_sales(self):
+        query = """
+            SELECT *
+            FROM sales
+            WHERE status = 'COMPLETED'
+            ORDER BY created_at DESC
+        """
+        self.db.cursor.execute(query)
+        return self.db.cursor.fetchall()
+    
+    def get_sale_with_items(self, sale_id):
+        sale_query = "SELECT * FROM sales WHERE id = ?"
+        items_query = "SELECT * FROM sale_items WHERE sale_id = ?"
+
+        self.db.cursor.execute(sale_query, (sale_id,))
+        sale = self.db.cursor.fetchone()
+        self.db.cursor.execute(items_query, (sale_id,))
+        items = self.db.cursor.fetchall()
+
+        return {
+            "sale": sale,
+            "items": items
+        }
+    
+    def get_sale_item(self, sale_id, product_id):
+        """
+        Return one item from a sale.
+        """
+
+        query = """
+            SELECT *
+            FROM sale_items
+            WHERE sale_id = ?
+            AND product_id = ?
+        """
+
+        self.db.cursor.execute(
+            query,
+            (
+                sale_id,
+                product_id
+            )
+        )
+        return self.db.cursor.fetchone()
+
+    def update_item_quantity(
+        self,
+        sale_id,
+        product_id,
+        quantity,
+        subtotal
+    ):
+        """
+        Update the quantity and subtotal of a sale item.
+        """
+        query = """
+            UPDATE sale_items
+            SET quantity = ?,
+                subtotal = ?
+            WHERE sale_id = ?
+            AND product_id = ?
+        """
+        self.db.cursor.execute(
+            query,
+            (
+                quantity,
+                subtotal,
+                sale_id,
+                product_id
+            )
+        )

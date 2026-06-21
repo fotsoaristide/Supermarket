@@ -43,9 +43,7 @@ class MenuController:
         self.sale_controller.start_sale()
 
         while True:
-            print("\n1. Add product")
-            print("2. View cart")
-            print("3. End sale")
+            self.sale_controller.sale_view.show_sale_menu()
 
             choice = input("Choice: ")
 
@@ -56,6 +54,16 @@ class MenuController:
                 self.sale_controller.show_current_sale()
 
             elif choice == "3":
+                self.sale_controller.update_item_quantity()
+
+            elif choice == "4":
+                print("Remove product - Coming soon")
+
+            elif choice == "5":
+                print("Cancel sale - Coming soon")
+                break
+
+            elif choice == "6":
                 self.sale_controller.end_sale()
                 break
 
