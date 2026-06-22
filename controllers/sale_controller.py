@@ -43,13 +43,42 @@ class SaleController:
 
         self.sale_view.display_sale(sale_data)
 
+    def remove_product(self):
+        """
+        Remove product from current sale.
+        """
+
+        product_id = self.sale_view.get_update_product_id()
+
+        try:
+            self.sale_service.remove_item(product_id)
+
+            self.sale_view.show_message("Product removed successfully.")
+
+            self.show_current_sale()
+
+        except Exception as e:
+            self.sale_view.show_error(str(e))
+
+    def cancel_sale(self):
+        """
+        Cancel current sale.
+        """
+
+        try:
+            self.sale_service.cancel_sale()
+
+            self.sale_view.show_message("Sale cancelled successfully.")
+
+        except Exception as e:
+            self.sale_view.show_error(str(e))
+
     # =========================
     # END SALE
     # =========================
     def end_sale(self):
         try:
             total = self.sale_service.end_sale()
-
             if total is None:
                 self.sale_view.show_error("No active sale to end.")
                 return
@@ -57,6 +86,31 @@ class SaleController:
             self.sale_view.show_message(
                 f"Sale completed. TOTAL = {total} FCFA"
             )
+
+            # =========================
+            # RECEIPT MENU (MODE PRO)
+            # =========================
+            while True:
+                print("\n===== RECEIPT OPTIONS =====")
+                print("1. Print ticket")
+                print("2. Do not print")
+                print("3. Reprint last ticket")
+
+                choice = input("Choice: ")
+
+                if choice == "1":
+                    ticket = self.sale_service.generate_last_ticket()
+                    print("\n" + ticket)
+                    break
+
+                elif choice == "2":
+                    break
+
+                elif choice == "3":
+                    print("\n" + self.sale_service.reprint_last_ticket())
+
+                else:
+                    print("Invalid choice")
 
         except Exception as e:
             self.sale_view.show_error(str(e))
@@ -79,6 +133,40 @@ class SaleController:
             )
 
             self.show_current_sale()
+
+        except Exception as e:
+            self.sale_view.show_error(str(e))
+
+    def show_sales_history(self):
+        """
+        Display sales history and allow the user to view a sale.
+        """
+        try:
+            sales = self.sale_service.get_sales_history()
+
+            if not sales:
+                self.sale_view.show_message("No sales found.")
+                return
+
+            self.sale_view.display_sales_history(sales)
+
+            sale_id = int(input("Enter sale ID to view: "))
+
+            data = self.sale_service.get_sale_details(sale_id)
+
+            self.sale_view.display_sale(data)
+
+            print("\n1. Print ticket")
+            print("2. Back")
+
+            choice = input("Choice: ")
+
+            if choice == "1":
+                ticket = self.sale_service.ticket_printer.generate(
+                    data["sale"],
+                    data["items"]
+                )
+                print("\n" + ticket)
 
         except Exception as e:
             self.sale_view.show_error(str(e))

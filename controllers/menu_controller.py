@@ -31,6 +31,9 @@ class MenuController:
                 self.handle_sale()
 
             elif choice == "7":
+                self.sale_controller.show_sales_history()
+
+            elif choice == "8":
                 break
 
             else:
@@ -57,10 +60,10 @@ class MenuController:
                 self.sale_controller.update_item_quantity()
 
             elif choice == "4":
-                print("Remove product - Coming soon")
+                self.sale_controller.remove_product()
 
             elif choice == "5":
-                print("Cancel sale - Coming soon")
+                self.sale_controller.cancel_sale()
                 break
 
             elif choice == "6":

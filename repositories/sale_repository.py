@@ -104,42 +104,34 @@ class SaleRepository:
                 sale_id
             )
         )
-
+    
+    # Future dashboard statistics
     def get_all_sales(self):
         query = """
-            SELECT *
-            FROM sales
+            SELECT * FROM sales
             ORDER BY created_at DESC
         """
-
         self.db.cursor.execute(query)
         rows = self.db.cursor.fetchall()
 
-        return rows
+        return [dict(row) for row in rows]
     
-    def get_completed_sales(self):
-        query = """
-            SELECT *
-            FROM sales
-            WHERE status = 'COMPLETED'
-            ORDER BY created_at DESC
+    def delete_sale(self, sale_id):
         """
-        self.db.cursor.execute(query)
-        return self.db.cursor.fetchall()
-    
-    def get_sale_with_items(self, sale_id):
-        sale_query = "SELECT * FROM sales WHERE id = ?"
-        items_query = "SELECT * FROM sale_items WHERE sale_id = ?"
+        Delete a sale and all its items.
+        """
 
-        self.db.cursor.execute(sale_query, (sale_id,))
-        sale = self.db.cursor.fetchone()
-        self.db.cursor.execute(items_query, (sale_id,))
-        items = self.db.cursor.fetchall()
+        # delete items first
+        self.db.cursor.execute(
+            "DELETE FROM sale_items WHERE sale_id = ?",
+            (sale_id,)
+        )
 
-        return {
-            "sale": sale,
-            "items": items
-        }
+        # delete sale
+        self.db.cursor.execute(
+            "DELETE FROM sales WHERE id = ?",
+            (sale_id,)
+        )
     
     def get_sale_item(self, sale_id, product_id):
         """
@@ -188,3 +180,43 @@ class SaleRepository:
                 product_id
             )
         )
+    def delete_item(self, sale_id, product_id):
+        """
+        Remove an item from a sale.
+        """
+
+        query = """
+            DELETE FROM sale_items
+            WHERE sale_id = ?
+            AND product_id = ?
+        """
+
+        self.db.cursor.execute(query, (sale_id, product_id))
+
+    def get_completed_sales(self):
+        query = """
+            SELECT *
+            FROM sales
+            WHERE status = 'COMPLETED'
+            ORDER BY id DESC
+        """
+        self.db.cursor.execute(query)
+        return self.db.cursor.fetchall()
+
+
+    def get_sale_with_items(self, sale_id):
+        sale = self.get_sale(sale_id)
+
+        items_query = """
+            SELECT *
+            FROM sale_items
+            WHERE sale_id = ?
+        """
+
+        self.db.cursor.execute(items_query, (sale_id,))
+        items = self.db.cursor.fetchall()
+
+        return {
+            "sale": sale,
+            "items": items
+        }

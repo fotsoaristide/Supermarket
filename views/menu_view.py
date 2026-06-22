@@ -1,3 +1,6 @@
+from utils.formatter import Formatter
+
+
 class MenuView:
 
     def display_menu(self):
@@ -10,7 +13,8 @@ class MenuView:
         print("4. Update Product")
         print("5. Delete Product")
         print("6. New Sale")
-        print("7. Quit")
+        print("7. Sales History")
+        print("8. Quit")
         print("=" * 50)
 
     def get_choice(self):
@@ -55,26 +59,40 @@ class MenuView:
 
     def display_products(self, products):
 
+        NAME_WIDTH = 35
+
         print("\n===== PRODUCTS LIST =====")
+        print(f"{'ID':<4}{'BARCODE':<12}{'NAME':<35}{'PRICE':>10}   {'STOCK':>5}")
+        print("-" * 75)
 
-        if not products:
-            print("No products registered.")
-            return
+        for p in products:
 
-        print(f"{'ID':<5}{'BARCODE':<15}{'NOM':<25}{'PRIX':<12}{'STOCK':<10}")
-        print("-" * 70)
+            name_lines = Formatter.wrap_text(p.name, NAME_WIDTH)
 
-        for product in products:
+            price = f"{p.selling_price:,.2f}".replace(",", " ")
+            stock = str(p.quantity)
 
+            # première ligne avec données
             print(
-                f"{product.id:<5}"
-                f"{product.barcode:<15}"
-                f"{product.name:<25}"
-                f"{product.selling_price:<12.2f}"
-                f"{product.quantity:<10}"
+                f"{p.id:<4}"
+                f"{p.barcode:<12}"
+                f"{name_lines[0]:<35}"
+                f"{price:>10}   "
+                f"{stock:>5}"
             )
-    
-    
+
+            # lignes suivantes = uniquement nom
+            for line in name_lines[1:]:
+                print(
+                    f"{'':<4}"
+                    f"{'':<12}"
+                    f"{line:<35}"
+                    f"{'':>10}   "
+                    f"{'':>5}"
+                )
+
+        print("-" * 75)
+
     def invalid_choice(self):
         print("\nInvalid choice.")
 

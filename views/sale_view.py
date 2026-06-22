@@ -1,3 +1,7 @@
+from datetime import datetime
+from utils.formatter import Formatter
+
+
 class SaleView:
     """
     CLI interface for sales.
@@ -31,7 +35,7 @@ class SaleView:
 
         print("\n" + "=" * 50)
         print(f"Sale ID: {sale['id']}")
-        print(f"DATE: {sale['created_at']}")
+        print(f"DATE: {Formatter.format_date(sale['created_at'])}")
         print("-" * 50)
 
         for item in items:
@@ -39,10 +43,23 @@ class SaleView:
             qty = item["quantity"]
             unit = item["unit_price"]
             subtotal = item["subtotal"]
-            print(f"{name:<15} x{qty:<3} {unit:>6} FCFA  => {subtotal:>6} FCFA")
+            # Nom multi-ligne
+            name_lines = Formatter.wrap_text(name, 25)
+
+            for line in name_lines:
+                print(line)
+
+            left = f"{qty} x {unit:.0f}"
+            right = Formatter.format_money(subtotal)
+
+            print(left.ljust(25) + right)
+            print()
 
         print("-" * 50)
-        print(f"{'TOTAL':<25} {sale['total']} FCFA")
+        print(
+            "TOTAL".ljust(25) +
+            Formatter.format_money(sale["total"])
+        )
         print("=" * 50 + "\n")
 
     # =========================
@@ -68,3 +85,25 @@ class SaleView:
         Ask the user for the new quantity.
         """
         return int(input("New quantity: "))
+    
+    def display_sales_history(self, sales):
+
+        print("\n===== SALES HISTORY =====")
+        print(f"{'ID':<5}{'DATE':<18}{'TOTAL':>12}")
+        print("-" * 45)
+
+        for s in sales:
+
+            raw_date = s["created_at"]
+            raw_total = s["total"]
+
+            formatted_date = Formatter.format_date(raw_date)
+            formatted_total = Formatter.format_money(raw_total)
+
+            print(
+                f"{s['id']:<5}"
+                f"{formatted_date:<18}"
+                f"{formatted_total:>12}"
+            )
+
+        print("-" * 45)

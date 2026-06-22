@@ -1,3 +1,6 @@
+from utils.ticket_printer import TicketPrinter
+
+
 class SaleService:
     """
     Business logic for handling sales.
@@ -10,6 +13,10 @@ class SaleService:
         self.database = sale_repository.db
 
         self.current_sale_id = None
+
+        self.last_completed_sale_id = None
+        self.last_ticket = None
+        self.ticket_printer = TicketPrinter()
 
     # =========================
     # START SALE
@@ -134,6 +141,49 @@ class SaleService:
             subtotal
         )
         return self.recalculate_total()
+    
+    def remove_item(self, product_id):
+        """
+        Remove a product from current sale.
+        """
+
+        if self.current_sale_id is None:
+            raise Exception("No active sale.")
+
+        sale_item = self.sale_repository.get_sale_item(
+            self.current_sale_id,
+            product_id
+        )
+
+        if sale_item is None:
+            raise ValueError("Product not in current sale.")
+
+        self.sale_repository.delete_item(
+            self.current_sale_id,
+            product_id
+        )
+
+        return self.recalculate_total()
+    
+    def cancel_sale(self):
+        """
+        Cancel current sale completely.
+        """
+
+        if self.current_sale_id is None:
+            raise Exception("No active sale.")
+
+        try:
+            # delete from DB
+            self.sale_repository.delete_sale(self.current_sale_id)
+
+            # reset state
+            self.current_sale_id = None
+
+            return True
+
+        except Exception as e:
+            raise e
 
     # =========================
     # END SALE
@@ -148,40 +198,108 @@ class SaleService:
 
         try:
             # 1. récupérer les items
-            items = self.sale_repository.get_sale_items(self.current_sale_id)
+            items = self.sale_repository.get_sale_items(
+                self.current_sale_id
+            )
 
             if not items:
                 raise Exception("Cannot finalize empty sale.")
 
-            # 2. vérifier stock + décrémenter
+            # 2. vérifier le stock + décrémenter
             for item in items:
                 self.product_repository.decrease_stock(
                     item["product_id"],
                     item["quantity"]
                 )
-
-            # 3. marquer vente comme terminée
-            self.sale_repository.complete_sale(self.current_sale_id)
-
-            # 4. commit global
-            self.database.commit()
-
+            # 3. calculer et enregistrer le total
             total = self.recalculate_total()
 
-            # 5. reset session
-            self.current_sale_id = None
+            # 4. marquer la vente comme terminée
+            self.sale_repository.complete_sale(
+                self.current_sale_id
+            )
 
+            # 5. valider toute la transaction
+            self.database.commit()
+
+            # 6. mémoriser la dernière vente terminée
+            self.last_completed_sale_id = self.current_sale_id
+
+            # 7. fermer la vente courante
+            self.current_sale_id = None
             return total
 
         except Exception as e:
             self.database.rollback()
             raise e
         
-    def get_all_sales(self):
-        return self.sale_repository.get_all_sales()
+    def get_sales_history(self):
+        """
+        Return all completed sales.
+        """
+        return self.sale_repository.get_completed_sales()
     
-    def get_completed_sales(self):
+    def generate_receipt(self):
+        """
+        Generate receipt for last completed sale.
+        """
+
+        if self.last_completed_sale_id is None:
+            raise Exception("No completed sale available.")
+
+        sale = self.sale_repository.get_sale(
+            self.last_completed_sale_id
+        )
+
+        items = self.sale_repository.get_sale_items(
+            self.last_completed_sale_id
+        )
+
+        return self.ticket_printer.generate(
+            sale,
+            items
+        )
+    
+    def generate_last_ticket(self):
+        """
+        Generate and cache receipt for last completed sale.
+    """
+
+        if self.last_completed_sale_id is None:
+            raise Exception("No completed sale available.")
+        sale = self.sale_repository.get_sale(
+            self.last_completed_sale_id
+        )
+
+        items = self.sale_repository.get_sale_items(
+            self.last_completed_sale_id
+        )
+
+        self.last_ticket = self.ticket_printer.generate(
+            sale,
+            items
+        )
+
+        return self.last_ticket
+    
+    def reprint_last_ticket(self):
+        """
+        Return last generated ticket if exists.
+        """
+
+        if self.last_ticket is None:
+            return "No ticket available to reprint."
+
+        return self.last_ticket
+    
+
+    def get_sale_history(self):
         return self.sale_repository.get_completed_sales()
     
     def get_sale_details(self, sale_id):
-        return self.sale_repository.get_sale_with_items(sale_id)
+        data = self.sale_repository.get_sale_with_items(sale_id)
+
+        if not data["sale"]:
+            raise Exception("Sale not found")
+
+        return data
