@@ -1,5 +1,6 @@
 from utils.ticket_printer import TicketPrinter
 from utils.thermal_printer import ThermalPrinter
+from datetime import datetime, timedelta
 
 
 class SaleService:
@@ -287,9 +288,6 @@ class SaleService:
 
         return self.last_ticket
     
-
-    def get_sale_history(self):
-        return self.sale_repository.get_completed_sales()
     
     def get_sale_details(self, sale_id):
         data = self.sale_repository.get_sale_with_items(sale_id)
@@ -310,3 +308,327 @@ class SaleService:
         self.thermal_printer.print_receipt(
             self.last_ticket
         )
+
+    # =========================
+    # ACCOUNTING CORE
+    # =========================
+
+    def get_sales_between(self, start_date, end_date):
+        """
+        Return completed sales between two dates (inclusive).
+        """
+        sales = self.sale_repository.get_completed_sales()
+
+        filtered_sales = []
+
+        for sale in sales:
+            sale_date = datetime.fromisoformat(
+                sale["created_at"]
+            )
+
+            if start_date <= sale_date <= end_date:
+                filtered_sales.append(sale)
+
+        return filtered_sales
+
+    def get_sales_total(self, sales):
+        """
+        Calculate total revenue from a sales list.
+        """
+        return sum(sale["total"] for sale in sales)
+
+    def get_sales_count(self, sales):
+        """
+        Return number of sales.
+        """
+        return len(sales)
+
+    # =========================
+    # DAILY REPORT
+    # =========================
+
+    def get_today_sales(self):
+        """
+        Return today's completed sales.
+        """
+        now = datetime.now()
+
+        start = now.replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0
+        )
+
+        end = now
+
+        return self.get_sales_between(start, end)
+
+    def get_today_total(self):
+        """
+        Return today's revenue.
+        """
+        return self.get_sales_total(
+            self.get_today_sales()
+        )
+
+    def get_today_sales_count(self):
+        """
+        Return today's number of sales.
+        """
+        return self.get_sales_count(
+            self.get_today_sales()
+        )
+    def get_daily_report(self):
+        """
+        Return today's accounting report.
+        """
+
+        sales = self.get_today_sales()
+
+        return {
+            "title": "DAILY REPORT",
+            "period": datetime.now().strftime("%d/%m/%Y"),
+            "sales_count": self.get_sales_count(sales),
+            "revenue": self.get_sales_total(sales)
+        }
+    
+    
+    # =========================
+    # WEEKLY REPORT
+    # =========================
+
+    def get_week_sales(self):
+        """
+        Return completed sales for the current week.
+        Week starts on Monday.
+        """
+        now = datetime.now()
+
+        start = now.replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0
+        )
+
+        start = start.replace(
+            day=now.day
+        ) - timedelta(days=now.weekday())
+
+        end = now
+
+        return self.get_sales_between(start, end)
+
+    def get_week_total(self):
+        """
+        Return weekly revenue.
+        """
+        return self.get_sales_total(
+            self.get_week_sales()
+        )
+
+    def get_week_sales_count(self):
+        """
+        Return weekly number of sales.
+        """
+        return self.get_sales_count(
+            self.get_week_sales()
+        )
+    def get_weekly_report(self):
+        """
+        Return weekly accounting report.
+        """
+
+        now = datetime.now()
+
+        start = now.replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0
+        ) - timedelta(days=now.weekday())
+
+        end = now
+
+        sales = self.get_sales_between(start, end)
+
+        period = (
+            f"{start.strftime('%d/%m/%Y')} → "
+            f"{end.strftime('%d/%m/%Y')}"
+        )
+
+        return {
+            "title": "WEEKLY REPORT",
+            "period": period,
+            "sales_count": self.get_sales_count(sales),
+            "revenue": self.get_sales_total(sales)
+        }
+    def get_month_sales(self):
+        """
+        Return completed sales for the current month.
+        """
+        now = datetime.now()
+
+        start = now.replace(
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0
+        )
+        end = now
+        return self.get_sales_between(start, end)
+    
+    def get_month_total(self):
+        """
+        Return monthly revenue.
+        """
+        return self.get_sales_total(
+            self.get_month_sales()
+        )
+    
+    def get_month_sales_count(self):
+        """
+        Return monthly number of sales.
+        """
+        return self.get_sales_count(
+            self.get_month_sales()
+        )
+    
+    def get_monthly_report(self):
+
+        now = datetime.now()
+
+        start = now.replace(
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0
+        )
+
+        end = now
+
+        sales = self.get_sales_between(start, end)
+
+        period = now.strftime("%B %Y")  # ex: June 2026
+
+        return {
+            "title": "MONTHLY REPORT",
+            "period": period,
+            "sales_count": self.get_sales_count(sales),
+            "revenue": self.get_sales_total(sales)
+        }
+    
+    def get_profit_for_sales(self, sales):
+        """
+        Calculate real profit from sales using product purchase price.
+        """
+
+        total_revenue = 0
+        total_cost = 0
+
+        for sale in sales:
+            items = self.sale_repository.get_sale_items(sale["id"])
+
+            for item in items:
+                product = self.product_repository.get_by_id(item["product_id"])
+
+                if not product:
+                    continue
+
+                revenue = item["subtotal"]
+
+                # coût réel basé sur purchase_price
+                cost = product.purchase_price * item["quantity"]
+
+                total_revenue += revenue
+                total_cost += cost
+
+        return {
+            "revenue": total_revenue,
+            "cost": total_cost,
+            "profit": total_revenue - total_cost
+        }
+    
+    def get_profit_report(self):
+        """
+        Return profit report for all completed sales.
+        """
+
+        sales = self.sale_repository.get_completed_sales()
+        data = self.get_profit_for_sales(sales)
+
+        return {
+            "title": "PROFIT REPORT",
+            "period": "All time",
+            "sales_count": self.get_sales_count(sales),
+            "revenue": data["revenue"],
+            "cost": data["cost"],
+            "profit": data["profit"]
+        }
+    
+    def get_today_profit_report(self):
+        """
+        Profit report for today.
+        """
+
+        sales = self.get_today_sales()
+        data = self.get_profit_for_sales(sales)
+
+        return {
+            "title": "PROFIT REPORT (TODAY)",
+            "period": datetime.now().strftime("%d/%m/%Y"),
+            "revenue": data["revenue"],
+            "cost": data["cost"],
+            "profit": data["profit"]
+        }
+    
+    #STOCK VALUETION
+    def get_stock_valuation(self):
+        """
+        Calculate total value of current stock.
+        """
+
+        products = self.product_repository.get_all_products()
+
+        total_value = 0
+
+        for product in products:
+            total_value += product.purchase_price * product.quantity
+
+        return {
+            "title": "STOCK VALUATION",
+            "total_value": total_value,
+            "products_count": len(products)
+        }
+    
+    def get_stock_valuation_details(self):
+        """
+        Return stock value per product.
+        """
+
+        products = self.product_repository.get_all_products()
+
+        details = []
+
+        total = 0
+
+        for p in products:
+            value = p.purchase_price * p.quantity
+
+            details.append({
+                "name": p.name,
+                "quantity": p.quantity,
+                "unit_cost": p.purchase_price,
+                "value": value
+            })
+
+            total += value
+
+        return {
+            "title": "STOCK VALUATION DETAIL",
+            "items": details,
+            "total_value": total
+        }

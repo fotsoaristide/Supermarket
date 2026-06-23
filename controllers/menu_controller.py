@@ -34,6 +34,9 @@ class MenuController:
                 self.sale_controller.show_sales_history()
 
             elif choice == "8":
+                self.sale_controller.accounting_menu()
+
+            elif choice == "9":
                 break
 
             else:

@@ -171,3 +171,148 @@ class SaleController:
 
         except Exception as e:
             self.sale_view.show_error(str(e))
+
+    def display_report(
+        self,
+        title,
+        period,
+        sales_count,
+        revenue,
+        profit=None
+    ):
+        print("\n========================================")
+        print(f"{title}")
+        print("========================================")
+        print(f"Period          : {period}")
+        print(f"Number of sales : {sales_count}")
+        print(f"Revenue         : {revenue} FCFA")
+
+        if profit is not None:
+            print(f"Cost/Profit info included")
+
+            print(f"Profit          : {profit} FCFA")
+
+        print("========================================")
+
+    def show_daily_report(self):
+        """
+        Display daily accounting report.
+        """
+
+        report = self.sale_service.get_daily_report()
+
+        self.display_report(
+            report["title"],
+            report["period"],
+            report["sales_count"],
+            report["revenue"]
+        )
+
+    def show_weekly_report(self):
+        """
+        Display weekly accounting report.
+        """
+        report = self.sale_service.get_weekly_report()
+
+        self.display_report(
+            report["title"],
+            report["period"],
+            report["sales_count"],
+            report["revenue"]
+        )
+    def show_monthly_report(self):
+        """
+        Display monthly accounting report.
+        """
+
+        report = self.sale_service.get_monthly_report()
+
+        self.display_report(
+            report["title"],
+            report["period"],
+            report["sales_count"],
+            report["revenue"]
+        )
+
+    def show_profit_report(self):
+        """
+        Display profit report.
+        """
+
+        report = self.sale_service.get_profit_report()
+
+        self.display_report(
+            report["title"],
+            report["period"],
+            report["sales_count"],
+            report["revenue"],
+            report["profit"]
+        )
+    
+    def show_stock_valuation(self):
+        """
+        Display stock valuation report.
+        """
+
+        report = self.sale_service.get_stock_valuation()
+
+        print("\n========================================")
+        print(f"{report['title']}")
+        print("========================================")
+
+        print(f"Products count : {report['products_count']}")
+        print(f"Total stock value : {report['total_value']} FCFA")
+
+        print("========================================")
+    
+    def show_stock_valuation_details(self):
+        """
+         detailed stock valuation.
+        """
+
+        report = self.sale_service.get_stock_valuation_details()
+
+        print("\n========================================")
+        print(f"{report['title']}")
+        print("========================================")
+
+        for item in report["items"]:
+            print(
+                f"{item['name']} | "
+                f"Qty: {item['quantity']} | "
+                f"Unit: {item['unit_cost']} | "
+                f"Value: {item['value']}"
+            )
+
+        print("========================================")
+        print(f"TOTAL STOCK VALUE: {report['total_value']} FCFA")
+
+    def accounting_menu(self):
+        while True:
+            print("\n===== ACCOUNTING =====")
+            print("1. Daily report")
+            print("2. Weekly report")
+            print("3. Monthly report")
+            print("4. Profit report")
+            print("5. Stock valuation")
+            print("6. Back")
+
+            choice = input("Choice: ")
+
+            if choice == "1":
+                self.show_daily_report()
+
+            elif choice == "2":
+                self.show_weekly_report()
+
+            elif choice == "3":
+                self.show_monthly_report()
+            
+            elif choice == "4":
+                self.show_profit_report()
+
+            elif choice == "5":
+                self.show_stock_valuation()
+
+            elif choice == "6":
+                break
