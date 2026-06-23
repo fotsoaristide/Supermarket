@@ -142,4 +142,3 @@ class TicketPrinter:
 
         lines.append(self.center(StoreConfig.FOOTER_MESSAGE))
         return lines
-    

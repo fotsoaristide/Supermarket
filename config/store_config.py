@@ -53,3 +53,9 @@ class StoreConfig:
     SHOW_PHONE = True
 
     SHOW_ADDRESS = True
+
+    # =========================
+    # PRINTER
+    # =========================
+
+    PRINTER_NAME = "XP-58 (copy 1)"

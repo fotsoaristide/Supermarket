@@ -99,8 +99,8 @@ class SaleController:
                 choice = input("Choice: ")
 
                 if choice == "1":
-                    ticket = self.sale_service.generate_last_ticket()
-                    print("\n" + ticket)
+                    self.sale_service.generate_last_ticket()
+                    self.sale_service.print_last_ticket()
                     break
 
                 elif choice == "2":
@@ -166,7 +166,8 @@ class SaleController:
                     data["sale"],
                     data["items"]
                 )
-                print("\n" + ticket)
+                self.sale_service.last_ticket = ticket
+                self.sale_service.thermal_printer.print_receipt(ticket)
 
         except Exception as e:
             self.sale_view.show_error(str(e))

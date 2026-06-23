@@ -1,4 +1,5 @@
 from utils.ticket_printer import TicketPrinter
+from utils.thermal_printer import ThermalPrinter
 
 
 class SaleService:
@@ -17,6 +18,7 @@ class SaleService:
         self.last_completed_sale_id = None
         self.last_ticket = None
         self.ticket_printer = TicketPrinter()
+        self.thermal_printer = ThermalPrinter(mode="usb")
 
     # =========================
     # START SALE
@@ -261,34 +263,27 @@ class SaleService:
         )
     
     def generate_last_ticket(self):
-        """
-        Generate and cache receipt for last completed sale.
-    """
-
         if self.last_completed_sale_id is None:
             raise Exception("No completed sale available.")
-        sale = self.sale_repository.get_sale(
-            self.last_completed_sale_id
-        )
 
-        items = self.sale_repository.get_sale_items(
-            self.last_completed_sale_id
-        )
+        sale = self.sale_repository.get_sale(self.last_completed_sale_id)
+        items = self.sale_repository.get_sale_items(self.last_completed_sale_id)
 
-        self.last_ticket = self.ticket_printer.generate(
-            sale,
-            items
-        )
+        self.last_ticket = self.ticket_printer.generate(sale, items)
 
         return self.last_ticket
     
     def reprint_last_ticket(self):
         """
-        Return last generated ticket if exists.
+        Reprint the last generated receipt.
         """
 
         if self.last_ticket is None:
-            return "No ticket available to reprint."
+            raise Exception("No ticket available.")
+
+        self.thermal_printer.print_receipt(
+            self.last_ticket
+        )
 
         return self.last_ticket
     
@@ -303,3 +298,15 @@ class SaleService:
             raise Exception("Sale not found")
 
         return data
+    
+    def print_last_ticket(self):
+        """
+        Print the last generated receipt.
+        """
+
+        if self.last_ticket is None:
+            raise Exception("No ticket available.")
+
+        self.thermal_printer.print_receipt(
+            self.last_ticket
+        )
