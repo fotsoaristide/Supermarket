@@ -632,3 +632,79 @@ class SaleService:
             "items": details,
             "total_value": total
         }
+    
+    #TOP SELLING PRODUCT
+    def get_top_selling_products(self, limit=10):
+        """
+        Return most sold products based on quantity sold.
+        """
+
+        sales = self.sale_repository.get_completed_sales()
+
+        product_sales = {}
+
+        for sale in sales:
+            items = self.sale_repository.get_sale_items(sale["id"])
+
+            for item in items:
+                product_id = item["product_id"]
+                quantity = item["quantity"]
+
+                if product_id not in product_sales:
+                    product_sales[product_id] = 0
+
+                product_sales[product_id] += quantity
+
+        # transform into list
+        result = []
+
+        for product_id, total_qty in product_sales.items():
+            product = self.product_repository.get_by_id(product_id)
+
+            if product:
+                result.append({
+                    "id": product.id,
+                    "name": product.name,
+                    "quantity_sold": total_qty,
+                    "revenue": total_qty * product.selling_price
+                })
+
+        # sort by quantity sold
+        result.sort(key=lambda x: x["quantity_sold"], reverse=True)
+
+        return result[:limit]
+    
+    #UNSOLD PRODUCT
+    def get_unsold_products(self):
+        """
+        Return products that have never been sold.
+        """
+
+        all_products = self.product_repository.get_all_products()
+        sales = self.sale_repository.get_completed_sales()
+
+        sold_ids = set()
+
+        for sale in sales:
+            items = self.sale_repository.get_sale_items(sale["id"])
+
+            for item in items:
+                sold_ids.add(item["product_id"])
+
+        return [
+            product
+            for product in all_products
+            if product.id not in sold_ids
+        ]
+    def get_top_selling_report(self):
+        return {
+            "title": "TOP SELLING PRODUCTS",
+            "items": self.get_top_selling_products()
+        }
+
+
+    def get_unsold_report(self):
+        return {
+            "title": "UNSOLD PRODUCTS",
+            "items": self.get_unsold_products()
+        }

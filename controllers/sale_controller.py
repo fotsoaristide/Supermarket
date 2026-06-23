@@ -3,8 +3,14 @@ class SaleController:
     Handles user interactions for sales (CLI layer).
     """
 
-    def __init__(self, sale_service, sale_view):
+    def __init__(
+        self,
+        sale_service,
+        product_service,
+        sale_view
+    ):
         self.sale_service = sale_service
+        self.product_service = product_service
         self.sale_view = sale_view
 
     # =========================
@@ -287,6 +293,87 @@ class SaleController:
         print("========================================")
         print(f"TOTAL STOCK VALUE: {report['total_value']} FCFA")
 
+    def show_low_stock_report(self):
+        """
+        Display products with low stock.
+        """
+
+        products = self.product_service.get_low_stock_products()
+
+        print("\n========================================")
+        print("          LOW STOCK REPORT")
+        print("========================================")
+
+        if not products:
+            print("No product requires restocking.")
+        else:
+
+            print(
+                f"{'ID':<5}"
+                f"{'PRODUCT':<28}"
+                f"{'STOCK':>8}"
+                f"{'MIN':>8}"
+            )
+
+            print("-" * 50)
+
+            for product in products:
+                print(
+                    f"{product.id:<5}"
+                    f"{product.name[:27]:<28}"
+                    f"{product.quantity:>8}"
+                    f"{product.minimum_stock:>8}"
+                )
+
+        print("========================================")
+    
+    def show_top_selling_products(self):
+        report = self.sale_service.get_top_selling_report()
+
+        print("\n========================================")
+        print(f"{report['title']}")
+        print("========================================")
+
+        if not report["items"]:
+            print("No sales data available.")
+            return
+
+        print(f"{'ID':<5}{'PRODUCT':<25}{'QTY SOLD':<10}{'REVENUE'}")
+        print("-" * 60)
+
+        for item in report["items"]:
+            print(
+                f"{item['id']:<5}"
+                f"{item['name'][:24]:<25}"
+                f"{item['quantity_sold']:<10}"
+                f"{item['revenue']} FCFA"
+            )
+
+        print("========================================")
+
+    def show_unsold_products(self):
+        report = self.sale_service.get_unsold_report()
+
+        print("\n========================================")
+        print(f"{report['title']}")
+        print("========================================")
+
+        if not report["items"]:
+            print("All products have been sold.")
+            return
+
+        print(f"{'ID':<5}{'PRODUCT':<30}{'STOCK'}")
+        print("-" * 50)
+
+        for product in report["items"]:
+            print(
+                f"{product.id:<5}"
+                f"{product.name[:29]:<30}"
+                f"{product.quantity}"
+            )
+
+        print("========================================")
+
     def accounting_menu(self):
         while True:
             print("\n===== ACCOUNTING =====")
@@ -295,7 +382,10 @@ class SaleController:
             print("3. Monthly report")
             print("4. Profit report")
             print("5. Stock valuation")
-            print("6. Back")
+            print("6. Low stock report")
+            print("7. Top Selling Products")
+            print("8. Unsold Products")
+            print("9. Back")
 
             choice = input("Choice: ")
 
@@ -315,4 +405,14 @@ class SaleController:
                 self.show_stock_valuation()
 
             elif choice == "6":
+                self.show_low_stock_report()
+
+            elif choice == "7":
+                self.show_top_selling_products()
+
+            elif choice == "8":
+                self.show_unsold_products()
+
+            elif choice == "9":
                 break
+   

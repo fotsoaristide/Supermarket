@@ -70,3 +70,37 @@ class ProductService:
 
     def get_all_products(self):
         return self.repository.get_all_products()
+    
+    def get_all(self):
+        return self.repository.get_all_products()
+
+    # =========================
+    # LOW STOCK REPORT
+    # =========================
+
+    def get_low_stock_products(self):
+        """
+        Return all products that reached their minimum stock.
+        """
+
+        products = self.repository.get_all_products()
+
+        return [
+            product
+            for product in products
+            if product.quantity <= product.minimum_stock
+        ]
+
+
+    def get_low_stock_report(self):
+        """
+        Return low stock report.
+        """
+
+        products = self.get_low_stock_products()
+
+        return {
+            "title": "LOW STOCK REPORT",
+            "products": products,
+            "count": len(products)
+        }

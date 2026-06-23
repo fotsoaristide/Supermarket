@@ -8,6 +8,8 @@ from repositories.sale_repository import SaleRepository
 from services.sale_service import SaleService
 from controllers.sale_controller import SaleController
 from views.sale_view import SaleView
+from utils.export_service import ExportService
+from utils.backup_service import BackupService
 
 
 class Container:
@@ -16,6 +18,12 @@ class Container:
 
         self.database = Database()
         self.database.init_db()
+
+        self.export_service = ExportService(self.database)
+
+        self.backup_service = BackupService(
+            self.database.db_path
+        )
 
         self.product_repository = ProductRepository(self.database)
 
@@ -41,10 +49,12 @@ class Container:
 
         self.sale_controller = SaleController(
             self.sale_service,
+            self.product_service,
             self.sale_view
         )
 
         self.menu_controller = MenuController(
+            self,
             self.menu_view,
             self.product_controller,
             self.sale_controller

@@ -15,7 +15,9 @@ class MenuView:
         print("6. New Sale")
         print("7. Sales History")
         print("8. Accounting")
-        print("9. Quit")
+        print("9. Export data")
+        print("10. Backup system")
+        print("11. Quit")
         print("=" * 50)
 
     def get_choice(self):

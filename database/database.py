@@ -39,3 +39,7 @@ class Database:
 
     def close(self):
         self.connection.close()
+    
+    @property
+    def db_path(self):
+        return Path(__file__).parent / "stock.db"
