@@ -15,7 +15,12 @@ class ProductsView(BaseView):
         self.selected_product = None
 
         self.build_ui()
+
         self.load_products()
+
+        self.refresh_statistics()
+        self.refresh_alerts()
+
         self.render_products()
 
         self.ui.event_bus.subscribe("product_changed", self.refresh)
@@ -187,18 +192,45 @@ class ProductsView(BaseView):
         )
 
         # =========================
-        # MINI DASHBOARD (TOP / LOW / ALERTS)
+        # PRODUCT LIST HEADER
         # =========================
-        self.dashboard = ctk.CTkFrame(self.left_panel, height=110)
-        self.dashboard.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
-
-        self.dashboard_label = ctk.CTkLabel(
-            self.dashboard,
-            text="Top Products | Low Stock | Out of Stock Alerts",
-            font=("Arial", 13, "bold"),
-            text_color=Theme.PRIMARY
+        self.dashboard = ctk.CTkFrame(
+            self.left_panel,
+            height=40,
+            fg_color="transparent"
         )
-        self.dashboard_label.pack(pady=20)
+        self.dashboard.grid(
+            row=1,
+            column=0,
+            sticky="ew",
+            padx=10,
+            pady=(5, 0)
+        )
+
+        self.dashboard.grid_columnconfigure(0, weight=5)
+        self.dashboard.grid_columnconfigure(1, weight=2)
+        self.dashboard.grid_columnconfigure(2, weight=1)
+
+        ctk.CTkLabel(
+            self.dashboard,
+            text="PRODUCT",
+            font=("Arial", 12, "bold"),
+            text_color=Theme.PRIMARY
+        ).grid(row=0, column=0, sticky="w")
+
+        ctk.CTkLabel(
+            self.dashboard,
+            text="PRICE",
+            font=("Arial", 12, "bold"),
+            text_color=Theme.PRIMARY
+        ).grid(row=0, column=1)
+
+        ctk.CTkLabel(
+            self.dashboard,
+            text="QTY",
+            font=("Arial", 12, "bold"),
+            text_color=Theme.PRIMARY
+        ).grid(row=0, column=2)
 
         # =========================
         # PRODUCT LIST (CLEAN LIST STYLE)
@@ -596,85 +628,104 @@ class ProductsView(BaseView):
 
             is_selected = (
                 self.selected_product
-                and
-                product["id"] == self.selected_product["id"]
+                and product["id"] == self.selected_product["id"]
             )
 
-            default_color = (
-                Theme.PRIMARY
-                if is_selected
-                else "#2b2b2b"
-            )
+            bg = "#2563eb" if is_selected else "#1d4ed8"
 
             row = ctk.CTkFrame(
                 self.list_frame,
-                height=42,
-                corner_radius=18,
-                fg_color=default_color
+                height=52,
+                fg_color=bg,
+                corner_radius=18
             )
-
             row.pack(
                 fill="x",
-                padx=5,
-                pady=3
+                padx=6,
+                pady=4
             )
 
             row.pack_propagate(False)
 
-            def enter(event, frame=row, selected=is_selected):
-                if not selected:
-                    frame.configure(
-                        fg_color="#404040"
-                    )
+            # -------------------------
+            # hover
+            # -------------------------
 
-            def leave(event, frame=row, selected=is_selected):
-                if not selected:
-                    frame.configure(
-                        fg_color="#2b2b2b"
-                    )
+            def enter(e, r=row, s=is_selected):
+                if not s:
+                    r.configure(fg_color="#3b82f6")
+
+            def leave(e, r=row, s=is_selected):
+                if not s:
+                    r.configure(fg_color="#1d4ed8")
 
             row.bind("<Enter>", enter)
             row.bind("<Leave>", leave)
 
-            name = product["name"]
+            # -------------------------
+            # nom produit
+            # -------------------------
 
-            if product["low_stock"]:
-                name += " ⚠"
-
-            ctk.CTkLabel(
+            name = ctk.CTkLabel(
                 row,
-                text=name,
-                font=("Arial",13),
-                anchor="w"
-            ).pack(
+                text=product["name"],
+                text_color="white",
+                font=("Arial", 14, "bold")
+            )
+            name.pack(
                 side="left",
                 padx=15
             )
 
-            ctk.CTkLabel(
+            # -------------------------
+            # quantité
+            # -------------------------
+
+            stock_color = (
+                "#fca5a5"
+                if product["low_stock"]
+                else "#d1fae5"
+            )
+
+            qty = ctk.CTkLabel(
                 row,
                 text=str(product["stock"]),
-                width=50
-            ).pack(
+                text_color=stock_color,
+                font=("Arial", 13, "bold")
+            )
+            qty.pack(
                 side="right",
                 padx=10
             )
 
-            ctk.CTkLabel(
+            # -------------------------
+            # prix
+            # -------------------------
+
+            price = ctk.CTkLabel(
                 row,
                 text=f"{self.format_price(product['price'])}",
-                text_color=Theme.PRIMARY,
-                width=80
-            ).pack(
+                text_color="white",
+                font=("Arial", 13, "bold")
+            )
+            price.pack(
                 side="right",
-                padx=10
+                padx=15
             )
 
-            row.bind(
-                "<Button-1>",
-                lambda e, p=product:
-                self.select_product(p)
-            )
+            # -------------------------
+            # click
+            # -------------------------
+
+            widgets = [row, name, qty, price]
+
+            for widget in widgets:
+                widget.bind(
+                    "<Button-1>",
+                    lambda e, p=product:
+                    self.select_product(p)
+                )
+        
 
     def open_add_dialog(self):
         ProductDialog(self, self.ui)
@@ -720,5 +771,12 @@ class ProductsView(BaseView):
         self.refresh_statistics()
 
         self.refresh_alerts()
+
+        if self.selected_product:
+
+            for p in self.products:
+                if p["id"] == self.selected_product["id"]:
+                    self.select_product(p)
+                    break
 
         self.render_products()

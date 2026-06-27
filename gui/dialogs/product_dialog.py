@@ -157,7 +157,9 @@ class ProductDialog(ctk.CTkToplevel):
 
                 barcode=self.barcode.get(),
 
-                name=self.name.get(),
+                name=self.normalize_name(
+                    self.name.get()
+                ),
 
                 category=self.category.get(),
 
@@ -240,3 +242,11 @@ class ProductDialog(ctk.CTkToplevel):
 
         finally:
             self.saving = False
+    
+    def normalize_name(self, text):
+
+        return " ".join(
+            word.capitalize()
+            for word in text.strip().split()
+            if word
+        )
