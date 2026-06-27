@@ -4,9 +4,10 @@ from models.product import Product
 
 class ProductController:
 
-    def __init__(self, service, view):
+    def __init__(self, service, view, event_bus):
         self.service = service
         self.view = view
+        self.event_bus = event_bus
 
     def initialize(self):
         self.service.initialize_database()
@@ -125,3 +126,39 @@ class ProductController:
             self.view.success_message()
         except ValueError as error:
             self.view.error_message(str(error))
+
+    # =========================
+    # GUI API
+    # =========================
+
+    def add_product_from_model(self, product):
+        """
+        Add a Product model coming from the GUI.
+        """
+        self.service.add_product(product)
+        self.event_bus.emit("product_changed")
+
+    def update_product_from_model(self, product):
+        """
+        Update a Product model coming from the GUI.
+        """
+        self.service.update_product(product)
+        self.event_bus.emit("product_changed")
+
+    def delete_product_by_id(self, product_id):
+        """
+        Delete a product by id (GUI entry point).
+        """
+        self.service.delete_product(product_id)
+        self.event_bus.emit("product_changed")
+
+    # =========================
+    # GUI API (CLEAN LAYER)
+    # =========================
+
+    def get_all_products(self):
+        return self.service.get_all_products()
+
+
+    def search_products(self, keyword: str):
+        return self.service.search_products(keyword)

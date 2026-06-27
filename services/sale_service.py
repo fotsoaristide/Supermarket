@@ -20,6 +20,7 @@ class SaleService:
         self.last_ticket = None
         self.ticket_printer = TicketPrinter()
         self.thermal_printer = ThermalPrinter(mode="usb")
+        self.print_enabled = True
 
     # =========================
     # START SALE
@@ -35,10 +36,6 @@ class SaleService:
     # ADD PRODUCT TO SALE
     # =========================
     def add_product(self, product_id, quantity):
-        """
-        Add a product to the current sale.
-        """
-
         if self.current_sale_id is None:
             raise Exception("No active sale. Start a sale first.")
 
@@ -47,18 +44,30 @@ class SaleService:
         if not product:
             product = self.product_repository.get_by_barcode(product_id)
 
-        unit_price = product.selling_price
-        product_name = product.name
-
-        self.sale_repository.add_item(
-            sale_id=self.current_sale_id,
-            product_id=product_id,
-            product_name=product_name,
-            quantity=quantity,
-            unit_price=unit_price
+        sale_item = self.sale_repository.get_sale_item(
+            self.current_sale_id,
+            product.id
         )
 
-        # update total dynamically
+        if sale_item:
+            new_qty = sale_item["quantity"] + quantity
+            subtotal = new_qty * sale_item["unit_price"]
+
+            self.sale_repository.update_item_quantity(
+                self.current_sale_id,
+                product.id,
+                new_qty,
+                subtotal
+            )
+        else:
+            self.sale_repository.add_item(
+                sale_id=self.current_sale_id,
+                product_id=product.id,
+                product_name=product.name,
+                quantity=quantity,
+                unit_price=product.selling_price
+            )
+
         self.recalculate_total()
 
     # =========================
@@ -279,6 +288,9 @@ class SaleService:
         Reprint the last generated receipt.
         """
 
+        if not self.print_enabled:
+            raise Exception("Printing is disabled.")
+
         if self.last_ticket is None:
             raise Exception("No ticket available.")
 
@@ -298,9 +310,9 @@ class SaleService:
         return data
     
     def print_last_ticket(self):
-        """
-        Print the last generated receipt.
-        """
+
+        if not self.print_enabled:
+            return
 
         if self.last_ticket is None:
             raise Exception("No ticket available.")
@@ -708,3 +720,19 @@ class SaleService:
             "title": "UNSOLD PRODUCTS",
             "items": self.get_unsold_products()
         }
+    
+    def enable_printing(self):
+        self.print_enabled = True
+
+
+    def disable_printing(self):
+        self.print_enabled = False
+
+
+    def toggle_printing(self):
+        self.print_enabled = not self.print_enabled
+        return self.print_enabled
+
+
+    def is_printing_enabled(self):
+        return self.print_enabled

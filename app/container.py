@@ -10,6 +10,7 @@ from controllers.sale_controller import SaleController
 from views.sale_view import SaleView
 from utils.export_service import ExportService
 from utils.backup_service import BackupService
+from utils.event_bus import EventBus
 
 
 class Container:
@@ -18,6 +19,8 @@ class Container:
 
         self.database = Database()
         self.database.init_db()
+
+        self.event_bus = EventBus()
 
         self.export_service = ExportService(self.database)
 
@@ -35,7 +38,8 @@ class Container:
 
         self.product_controller = ProductController(
             self.product_service,
-            self.menu_view
+            self.menu_view,
+            self.event_bus
         )
 
         self.sale_repository = SaleRepository(self.database)

@@ -34,13 +34,10 @@ class TicketPrinter:
         )
 
         left = f"{qty} x {price:.0f}"
-
         right = f"{subtotal:,.0f}".replace(",", " ")
 
-        lines.append(
-            left.ljust(self.width - len(right))
-            + right
-        )
+        lines.append(f"{left:<15}{right:>15}")
+
         return "\n".join(lines)
     
     # =========================
