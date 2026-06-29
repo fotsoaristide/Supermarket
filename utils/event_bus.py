@@ -18,5 +18,6 @@ class EventBus:
         for callback in self.listeners[event_name]:
             try:
                 callback(data)
-            except Exception as e:
-                print(f"[EventBus Error] {event_name}: {e}")
+
+            except Exception:
+                pass

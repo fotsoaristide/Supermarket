@@ -21,7 +21,7 @@ class TopBar(ctk.CTkFrame):
 
         title = ctk.CTkLabel(
             self,
-            text="Supermarket POS",
+            text="ASTRO - MARKET",
             font=Theme.SUBTITLE,
             text_color=Theme.TEXT
         )

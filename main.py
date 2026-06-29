@@ -1,21 +1,24 @@
 from app.container import Container
-
+from gui.app import App
+from gui.login_window import LoginWindow
 
 def main():
 
-    container = Container()
+    login = LoginWindow()
+    login.protocol("WM_DELETE_WINDOW", login.quit)
+    login.mainloop()
 
-    # 👉 TEMPORAIRE : choix GUI / CLI
-    USE_GUI = True
+    if login.result:
 
-    if USE_GUI:
-        from gui.app import App
+        username, role = login.result
+
+        container = Container()
+
+        container.current_user = username
+        container.current_role = role
 
         app = App(container)
         app.mainloop()
-
-    else:
-        container.app.run()
 
 
 if __name__ == "__main__":

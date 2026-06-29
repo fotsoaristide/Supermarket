@@ -25,6 +25,16 @@ class ProductsView(BaseView):
 
         self.ui.event_bus.subscribe("product_changed", self.refresh)
 
+        self.ui.event_bus.subscribe(
+            "stock_updated",
+            lambda _: self.load_products()
+        )
+
+        self.ui.event_bus.subscribe(
+            "sale_completed",
+            lambda _: self.load_products()
+        )
+
     # =========================
     # UI LAYOUT (POS PRO SPLIT)
     # =========================
@@ -423,6 +433,7 @@ class ProductsView(BaseView):
             print("Products load error:", e)
             self.products = []
             self.filtered_products = []
+
     
     # =========================
     # STATISTICS

@@ -24,9 +24,13 @@ class App(ctk.CTk):
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
 
-        self.title("Supermarket POS")
-        self.geometry("1400x800")
-        self.minsize(1200, 700)
+        self.title("    ASTRO-SARL")
+        screen_w = self.winfo_screenwidth()
+        screen_h = self.winfo_screenheight()
+
+        self.geometry(
+            f"{screen_w-80}x{screen_h-120}+20+20"
+)
 
         self.configure(fg_color=Theme.BACKGROUND)
 
@@ -42,7 +46,11 @@ class App(ctk.CTk):
         self.grid_rowconfigure(1, weight=1)     # content row expand
 
         # SIDEBAR
-        self.sidebar = Sidebar(self, self.show_page)
+        self.sidebar = Sidebar(
+            self,
+            self.show_page,
+            self.ui.current_role
+        )
         self.sidebar.grid(row=0, column=0, rowspan=2, sticky="ns")
 
         # TOPBAR
@@ -62,22 +70,36 @@ class App(ctk.CTk):
         self.register_pages()
 
         self.show_page("Dashboard")
+        self.sidebar.highlight("Dashboard")
 
     def register_pages(self):
 
-        self.pages = {
-            "Dashboard": DashboardView(self.content, self.ui),
-            "Products": ProductsView(self.content, self.ui),
-            "Sales": SalesView(self.content, self.ui),
-            "History": HistoryView(self.content, self.ui),
-            "Accounting": AccountingView(self.content, self.ui),
-            "Export": ExportView(self.content, self.ui),
-            "Backup": BackupView(self.content, self.ui),
-            "Settings": SettingsView(self.content, self.ui),
-        }
+        if self.ui.current_role == "ADMIN":
+
+            self.pages = {
+                "Dashboard": DashboardView(self.content, self.ui),
+                "Products": ProductsView(self.content, self.ui),
+                "Sales": SalesView(self.content, self.ui),
+                "History": HistoryView(self.content, self.ui),
+                "Accounting": AccountingView(self.content, self.ui),
+                "Export": ExportView(self.content, self.ui),
+                "Backup": BackupView(self.content, self.ui),
+                "Settings": SettingsView(self.content, self.ui),
+            }
+
+        else:
+
+            self.pages = {
+                "Dashboard": DashboardView(self.content, self.ui),
+                "Sales": SalesView(self.content, self.ui),
+                "History": HistoryView(self.content, self.ui),
+            }
 
         for page in self.pages.values():
             page.grid(row=0, column=0, sticky="nsew")
 
     def show_page(self, page_name):
+
+        self.sidebar.highlight(page_name)
+
         self.pages[page_name].tkraise()

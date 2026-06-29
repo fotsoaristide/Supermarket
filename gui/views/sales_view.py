@@ -25,6 +25,16 @@ class SalesView(BaseView):
             lambda _: self.refresh_cart()
         )
 
+        self.ui.event_bus.subscribe(
+            "stock_updated",
+            lambda _: self.load_products()
+        )
+
+        self.ui.event_bus.subscribe(
+            "product_changed",
+            lambda _: self.load_products()
+        )
+
         self.after(150, self.focus_scan)
 
     # =========================
@@ -370,13 +380,24 @@ class SalesView(BaseView):
             return "0"
 
     def load_products(self):
-        return self.ui.product_controller.get_all_products()
+        self.products = self.ui.product_controller.get_all_products()
+        return self.products
 
     def render_products(self):
+
+        # clear UI
         for w in self.products_list.winfo_children():
             w.destroy()
 
-        for p in self.load_products():
+        # sécurité : refresh données avant rendu
+        if not hasattr(self, "products") or not self.products:
+            self.load_products()
+
+        # tri stable (important pour UX POS)
+        self.products.sort(key=lambda p: p.name.lower())
+
+        # render
+        for p in self.products:
             self.product_button(p)
 
     def render_filtered(self, products, q):

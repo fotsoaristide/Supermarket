@@ -61,7 +61,7 @@ class ProductRepository:
     def get_all_products(self):
 
         rows = self.database.cursor.execute(
-            "SELECT * FROM products"
+            "SELECT * FROM products ORDER BY name COLLATE NOCASE"
         ).fetchall()
 
         return [

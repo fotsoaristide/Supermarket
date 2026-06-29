@@ -31,13 +31,24 @@ class SaleRepository:
     # =========================
     # ADD ITEM TO SALE
     # =========================
-    def add_item(self, sale_id, product_id, product_name, quantity, unit_price):
+    def add_item(
+        self,
+        sale_id,
+        product_id,
+        product_name,
+        quantity,
+        unit_price
+    ):
         subtotal = quantity * unit_price
 
         query = """
         INSERT INTO sale_items (
-            sale_id, product_id, product_name,
-            quantity, unit_price, subtotal
+            sale_id,
+            product_id,
+            product_name,
+            quantity,
+            unit_price,
+            subtotal
         )
         VALUES (?, ?, ?, ?, ?, ?)
         """
@@ -53,7 +64,7 @@ class SaleRepository:
                 subtotal
             )
         )
-
+        
     # =========================
     # GET SALE ITEMS
     # =========================
@@ -90,21 +101,33 @@ class SaleRepository:
 
         self.db.cursor.execute(query, (total, sale_id))
 
-    def complete_sale(self, sale_id):
+    def complete_sale(
+        self,
+        sale_id,
+        total,
+        cost,
+        profit
+    ):
         query = """
             UPDATE sales
-            SET status = ?
-            WHERE id = ?
+            SET
+                total=?,
+                cost=?,
+                profit=?,
+                status='COMPLETED'
+            WHERE id=?
         """
 
         self.db.cursor.execute(
             query,
             (
-                "COMPLETED",
+                total,
+                cost,
+                profit,
                 sale_id
             )
         )
-    
+
     # Future dashboard statistics
     def get_all_sales(self):
         query = """

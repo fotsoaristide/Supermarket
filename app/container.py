@@ -11,6 +11,7 @@ from views.sale_view import SaleView
 from utils.export_service import ExportService
 from utils.backup_service import BackupService
 from utils.event_bus import EventBus
+from services.auth_service import AuthService
 
 
 class Container:
@@ -49,6 +50,8 @@ class Container:
             self.product_repository
         )
 
+        self.sale_service.event_bus = self.event_bus
+
         self.sale_view = SaleView()
 
         self.sale_controller = SaleController(
@@ -63,6 +66,10 @@ class Container:
             self.product_controller,
             self.sale_controller
         )
+
+        self.current_user = None
+        self.current_role = None
+        self.auth_service = AuthService()
 
     @property
     def app(self):

@@ -209,40 +209,96 @@ class SaleService:
             raise Exception("No active sale.")
 
         try:
-            # 1. récupérer les items
+
             items = self.sale_repository.get_sale_items(
                 self.current_sale_id
             )
 
             if not items:
-                raise Exception("Cannot finalize empty sale.")
+                raise Exception(
+                    "Cannot finalize empty sale."
+                )
 
-            # 2. vérifier le stock + décrémenter
+            # =========================
+            # STOCK UPDATE
+            # =========================
+
             for item in items:
+
                 self.product_repository.decrease_stock(
                     item["product_id"],
                     item["quantity"]
                 )
-            # 3. calculer et enregistrer le total
+
+            # =========================
+            # ACCOUNTING
+            # =========================
+
             total = self.recalculate_total()
 
-            # 4. marquer la vente comme terminée
+            cost = 0
+
+            for item in items:
+
+                product = self.product_repository.get_by_id(
+                    item["product_id"]
+                )
+
+                cost += (
+                    product.purchase_price
+                    * item["quantity"]
+                )
+
+            profit = total - cost
+
+            # =========================
+            # COMPLETE SALE
+            # =========================
+
             self.sale_repository.complete_sale(
+                self.current_sale_id,
+                total,
+                cost,
+                profit
+            )
+
+            self.database.commit()
+
+            # IMPORTANT :
+            # mémoriser AVANT les événements
+            self.last_completed_sale_id = (
                 self.current_sale_id
             )
 
-            # 5. valider toute la transaction
-            self.database.commit()
+            # =========================
+            # EVENTS
+            # =========================
 
-            # 6. mémoriser la dernière vente terminée
-            self.last_completed_sale_id = self.current_sale_id
+            if hasattr(self, "event_bus"):
 
-            # 7. fermer la vente courante
+                self.event_bus.emit(
+                    "sale_completed",
+                    self.last_completed_sale_id
+                )
+
+                self.event_bus.emit(
+                    "stock_updated",
+                    None
+                )
+
+                self.event_bus.emit(
+                    "product_changed",
+                    None
+                )
+
             self.current_sale_id = None
+
             return total
 
         except Exception as e:
+
             self.database.rollback()
+
             raise e
         
     def get_sales_history(self):
@@ -736,3 +792,146 @@ class SaleService:
 
     def is_printing_enabled(self):
         return self.print_enabled
+    
+    # =========================
+    # ACCOUNTING TOTALS
+    # =========================
+
+    def get_total_revenue(self):
+
+        sales = self.sale_repository.get_completed_sales()
+
+        return sum(
+            sale["total"]
+            for sale in sales
+        )
+
+
+    def get_total_cost(self):
+
+        sales = self.sale_repository.get_completed_sales()
+
+        return sum(
+            sale["cost"]
+            for sale in sales
+        )
+
+
+    def get_total_profit(self):
+
+        sales = self.sale_repository.get_completed_sales()
+
+        return sum(
+            sale["profit"]
+            for sale in sales
+        )
+
+
+    def get_total_transactions(self):
+
+        return len(
+            self.sale_repository.get_completed_sales()
+        )
+
+
+    def get_average_ticket(self):
+
+        sales = self.sale_repository.get_completed_sales()
+
+        if not sales:
+            return 0
+
+        return (
+            sum(s["total"] for s in sales)
+            / len(sales)
+        )
+    
+    def get_profit_margin(self):
+
+        revenue = self.get_total_revenue()
+
+        if revenue == 0:
+            return 0
+
+        return round(
+            (
+                self.get_total_profit()
+                / revenue
+            ) * 100,
+            2
+        )
+    
+    def get_expenses(self):
+
+        return self.get_total_cost()
+    
+    def get_average_ticket(self, sales):
+
+        if not sales:
+            return 0
+
+        return (
+            self.get_sales_total(sales)
+            / len(sales)
+        )
+    
+    def get_profit_margin(self, sales):
+
+        data = self.get_profit_for_sales(sales)
+
+        if data["revenue"] == 0:
+            return 0
+
+        return round(
+            (data["profit"] / data["revenue"]) * 100,
+            2
+        )
+    
+    def get_product_profit_ranking(self):
+
+        products = self.product_repository.get_all_products()
+
+        ranking = []
+
+        for product in products:
+
+            sold_qty = 0
+
+            sales = self.sale_repository.get_completed_sales()
+
+            for sale in sales:
+
+                items = self.sale_repository.get_sale_items(
+                    sale["id"]
+                )
+
+                for item in items:
+
+                    if item["product_id"] == product.id:
+                        sold_qty += item["quantity"]
+
+            ranking.append({
+
+                "name": product.name,
+
+                "profit_per_unit":
+                    product.selling_price
+                    - product.purchase_price,
+
+                "sold_quantity":
+                    sold_qty,
+
+                "total_profit":
+                    (
+                        product.selling_price
+                        - product.purchase_price
+                    )
+                    * sold_qty
+            })
+
+        ranking.sort(
+            key=lambda x: x["total_profit"],
+            reverse=True
+        )
+
+        return ranking

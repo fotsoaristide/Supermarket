@@ -1,0 +1,20 @@
+{
+    "login_enabled": true,
+    "users": [
+        {
+            "username": "admin",
+            "password": "1234",
+            "role": "ADMIN"
+        },
+        {
+            "username": "paul",
+            "password": "1234",
+            "role": "USER"
+        },
+        {
+            "username": "adam",
+            "password": "1234",
+            "role": "ADMIN"
+        }
+    ]
+}

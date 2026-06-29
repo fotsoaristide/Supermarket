@@ -145,6 +145,18 @@ class HistoryView(BaseView):
 
         self.reprint_btn.pack(side="right")
 
+        self.export_btn = ctk.CTkButton(
+            footer,
+            text="Export A4",
+            fg_color=Theme.SUCCESS,
+            command=self.confirm_export_sale
+        )
+
+        self.export_btn.pack(
+            side="right",
+            padx=5
+        )
+
     def load_sales(self):
 
         from datetime import datetime
@@ -341,3 +353,86 @@ class HistoryView(BaseView):
 
         except Exception as e:
             print("Reprint error:", e)
+
+    def confirm_export_sale(self):
+
+        if not self.selected_sale_id:
+            return
+
+        popup = ctk.CTkToplevel(self)
+
+        popup.title("Confirmation")
+        popup.geometry("320x150")
+        popup.grab_set()
+
+        ctk.CTkLabel(
+            popup,
+            text="Exporter cette vente au format A4 ?",
+            font=("Arial",14,"bold")
+        ).pack(pady=20)
+
+        buttons = ctk.CTkFrame(
+            popup,
+            fg_color="transparent"
+        )
+
+        buttons.pack(pady=10)
+
+        ctk.CTkButton(
+            buttons,
+            text="YES",
+            width=100,
+            command=lambda: (
+                popup.destroy(),
+                self.export_selected_sale()
+            )
+        ).pack(side="left", padx=10)
+
+        ctk.CTkButton(
+            buttons,
+            text="NO",
+            width=100,
+            command=popup.destroy
+        ).pack(side="left", padx=10)
+
+    def export_selected_sale(self):
+
+        import os
+        from datetime import datetime
+
+        if not self.selected_sale_id:
+            return
+
+        data = self.sale_service.get_sale_details(
+            self.selected_sale_id
+        )
+
+        sale = data["sale"]
+        items = data["items"]
+
+        os.makedirs(
+            "exports",
+            exist_ok=True
+        )
+
+        filename = (
+            f"exports/"
+            f"sale_A4_"
+            f"{sale['id']}_"
+            f"{datetime.now():%Y-%m-%d_%H-%M}.txt"
+        )
+
+        self.ui.export_service.export_sale_a4(
+            sale,
+            items,
+            filename
+        )
+
+        print(
+            "Exported:",
+            filename
+        )
+
+        os.startfile(
+            os.path.abspath("exports")
+        )
