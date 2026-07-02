@@ -675,7 +675,8 @@ class AccountingView(BaseView):
 
         top = (
             self.sale_service
-            .get_top_selling_products(
+            .get_top_selling_products_for_sales(
+                sales,
                 1
             )
         )

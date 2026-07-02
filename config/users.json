@@ -1,5 +1,5 @@
 {
-    "login_enabled": true,
+    "login_enabled": false,
     "users": [
         {
             "username": "admin",
@@ -7,14 +7,9 @@
             "role": "ADMIN"
         },
         {
-            "username": "paul",
+            "username": "cashier",
             "password": "1234",
             "role": "USER"
-        },
-        {
-            "username": "adam",
-            "password": "1234",
-            "role": "ADMIN"
         }
     ]
 }

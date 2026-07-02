@@ -13,10 +13,24 @@ class Database:
     """Database class for managing SQLite connections."""
 
     def __init__(self, db_name="stock.db"):
+        import sys
+        from pathlib import Path
 
-        database_path = Path(__file__).parent / db_name
+        if getattr(sys, "frozen", False):
+            base_path = Path(sys.executable).parent
+        else:
+            base_path = Path(__file__).parent
 
-        self.connection = sqlite3.connect(database_path, isolation_level=None)
+        database_path = base_path / db_name
+
+        # IMPORTANT
+        self.db_path = database_path
+
+        self.connection = sqlite3.connect(
+            database_path,
+            isolation_level=None
+        )
+
         self.connection.row_factory = sqlite3.Row
         self.cursor = self.connection.cursor()
 
@@ -40,6 +54,4 @@ class Database:
     def close(self):
         self.connection.close()
     
-    @property
-    def db_path(self):
-        return Path(__file__).parent / "stock.db"
+    

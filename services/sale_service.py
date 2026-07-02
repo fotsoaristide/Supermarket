@@ -448,18 +448,16 @@ class SaleService:
             self.get_today_sales()
         )
     def get_daily_report(self):
-        """
-        Return today's accounting report.
-        """
 
         sales = self.get_today_sales()
 
-        return {
-            "title": "DAILY REPORT",
-            "period": datetime.now().strftime("%d/%m/%Y"),
-            "sales_count": self.get_sales_count(sales),
-            "revenue": self.get_sales_total(sales)
-        }
+        return self.build_accounting_report(
+            sales,
+            "DAILY REPORT",
+            datetime.now().strftime(
+                "%d/%m/%Y"
+            )
+        )
     
     
     # =========================
@@ -503,35 +501,35 @@ class SaleService:
         return self.get_sales_count(
             self.get_week_sales()
         )
+    
     def get_weekly_report(self):
-        """
-        Return weekly accounting report.
-        """
 
         now = datetime.now()
 
-        start = now.replace(
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0
-        ) - timedelta(days=now.weekday())
-
-        end = now
-
-        sales = self.get_sales_between(start, end)
-
-        period = (
-            f"{start.strftime('%d/%m/%Y')} → "
-            f"{end.strftime('%d/%m/%Y')}"
+        start = (
+            now.replace(
+                hour=0,
+                minute=0,
+                second=0,
+                microsecond=0
+            )
+            - timedelta(
+                days=now.weekday()
+            )
         )
 
-        return {
-            "title": "WEEKLY REPORT",
-            "period": period,
-            "sales_count": self.get_sales_count(sales),
-            "revenue": self.get_sales_total(sales)
-        }
+        sales = self.get_week_sales()
+
+        return self.build_accounting_report(
+            sales,
+            "WEEKLY REPORT",
+            (
+                f"{start.strftime('%d/%m/%Y')} "
+                f"-> "
+                f"{now.strftime('%d/%m/%Y')}"
+            )
+        )
+
     def get_month_sales(self):
         """
         Return completed sales for the current month.
@@ -566,28 +564,15 @@ class SaleService:
     
     def get_monthly_report(self):
 
-        now = datetime.now()
+        sales = self.get_month_sales()
 
-        start = now.replace(
-            day=1,
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0
+        return self.build_accounting_report(
+            sales,
+            "MONTHLY REPORT",
+            datetime.now().strftime(
+                "%B %Y"
+            )
         )
-
-        end = now
-
-        sales = self.get_sales_between(start, end)
-
-        period = now.strftime("%B %Y")  # ex: June 2026
-
-        return {
-            "title": "MONTHLY REPORT",
-            "period": period,
-            "sales_count": self.get_sales_count(sales),
-            "revenue": self.get_sales_total(sales)
-        }
     
     def get_profit_for_sales(self, sales):
         """
@@ -764,6 +749,58 @@ class SaleService:
             for product in all_products
             if product.id not in sold_ids
         ]
+
+    def get_top_selling_products_for_sales(
+            self,
+            sales,
+            limit=10
+    ):
+        """
+        Return top selling products for a specific sales list.
+        """
+
+        product_sales = {}
+
+        for sale in sales:
+
+            items = self.sale_repository.get_sale_items(
+                sale["id"]
+            )
+
+            for item in items:
+
+                product_id = item["product_id"]
+
+                if product_id not in product_sales:
+                    product_sales[product_id] = 0
+
+                product_sales[product_id] += item["quantity"]
+
+        result = []
+
+        for product_id, qty in product_sales.items():
+
+            product = self.product_repository.get_by_id(
+                product_id
+            )
+
+            if product:
+
+                result.append({
+                    "id": product.id,
+                    "name": product.name,
+                    "quantity_sold": qty,
+                    "revenue":
+                        qty * product.selling_price
+                })
+
+        result.sort(
+            key=lambda x: x["quantity_sold"],
+            reverse=True
+        )
+
+        return result[:limit]
+
     def get_top_selling_report(self):
         return {
             "title": "TOP SELLING PRODUCTS",
@@ -832,34 +869,71 @@ class SaleService:
         return len(
             self.sale_repository.get_completed_sales()
         )
-
-
-    def get_average_ticket(self):
-
-        sales = self.sale_repository.get_completed_sales()
-
-        if not sales:
-            return 0
-
-        return (
-            sum(s["total"] for s in sales)
-            / len(sales)
-        )
     
-    def get_profit_margin(self):
+    def build_accounting_report(
+            self,
+            sales,
+            title,
+            period
+    ):
+        """
+        Build a complete accounting report.
+        """
 
-        revenue = self.get_total_revenue()
-
-        if revenue == 0:
-            return 0
-
-        return round(
-            (
-                self.get_total_profit()
-                / revenue
-            ) * 100,
-            2
+        profit = self.get_profit_for_sales(
+            sales
         )
+
+        avg = self.get_average_ticket(
+            sales
+        )
+
+        margin = self.get_profit_margin(
+            sales
+        )
+
+        top = self.get_top_selling_products_for_sales(
+            sales,
+            1
+        )
+
+        return {
+
+            "title": title,
+
+            "period": period,
+
+            "sales_count":
+                len(sales),
+
+            "revenue":
+                profit["revenue"],
+
+            "cost":
+                profit["cost"],
+
+            "profit":
+                profit["profit"],
+
+            "average_ticket":
+                avg,
+
+            "margin":
+                margin,
+
+            "best_seller":
+                top[0]["name"]
+                if top else "-",
+
+            "units_sold":
+                top[0]["quantity_sold"]
+                if top else 0,
+
+            "unsold_products":
+                len(
+                    self.get_unsold_products()
+                )
+        }
     
     def get_expenses(self):
 

@@ -58,4 +58,4 @@ class StoreConfig:
     # PRINTER
     # =========================
 
-    PRINTER_NAME = "XP-58 (copy 1)"
+    PRINTER_NAME = "XP-58"

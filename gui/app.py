@@ -20,6 +20,18 @@ class App(ctk.CTk):
 
     def __init__(self, container):
         super().__init__()
+        import os
+        import sys
+
+        def resource_path(relative_path):
+            if getattr(sys, "frozen", False):
+                return os.path.join(sys._MEIPASS, relative_path)
+            return os.path.join(os.path.dirname(__file__), relative_path)
+
+        try:
+            self.iconbitmap(resource_path("astro.ico"))
+        except:
+            pass
 
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")

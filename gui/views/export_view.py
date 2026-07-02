@@ -15,7 +15,6 @@ class ExportView(BaseView):
     def build_ui(self):
 
         self.body.grid_columnconfigure(0, weight=1)
-        self.body.grid_rowconfigure(1, weight=1)
 
         # =========================
         # EXPORT SETTINGS
@@ -91,72 +90,6 @@ class ExportView(BaseView):
             pady=5
         )
 
-        self.start_date = ctk.CTkEntry(
-            self.settings_frame,
-            placeholder_text="Start date DD/MM/YYYY"
-        )
-        self.start_date.pack(
-            fill="x",
-            padx=15,
-            pady=5
-        )
-
-        self.end_date = ctk.CTkEntry(
-            self.settings_frame,
-            placeholder_text="End date DD/MM/YYYY"
-        )
-        self.end_date.pack(
-            fill="x",
-            padx=15,
-            pady=5
-        )
-
-        # =========================
-        # AVAILABLE EXPORTS
-        # =========================
-
-        self.preview_frame = ctk.CTkFrame(
-            self.body,
-            corner_radius=12
-        )
-        self.preview_frame.grid(
-            row=1,
-            column=0,
-            sticky="nsew",
-            padx=10,
-            pady=10
-        )
-
-        ctk.CTkLabel(
-            self.preview_frame,
-            text="AVAILABLE DATA",
-            font=("Arial",18,"bold"),
-            text_color=Theme.PRIMARY
-        ).pack(
-            anchor="w",
-            padx=15,
-            pady=15
-        )
-
-        exports = [
-            "Sales",
-            "Profit",
-            "Inventory",
-            "Top Products",
-            "Unsold Products"
-        ]
-
-        for item in exports:
-
-            ctk.CTkCheckBox(
-                self.preview_frame,
-                text=item
-            ).pack(
-                anchor="w",
-                padx=25,
-                pady=5
-            )
-
         # =========================
         # ACTIONS
         # =========================
@@ -166,7 +99,7 @@ class ExportView(BaseView):
             fg_color="transparent"
         )
         self.action_frame.grid(
-            row=2,
+            row=1,
             column=0,
             sticky="ew",
             padx=10,
@@ -206,7 +139,7 @@ class ExportView(BaseView):
             font=("Arial",14)
         )
         self.status_label.grid(
-            row=3,
+            row=2,
             column=0,
             pady=10
         )
@@ -316,67 +249,232 @@ class ExportView(BaseView):
 
         try:
 
+            import os
+            import csv
+            import json
+            from datetime import datetime
+
             service = self.ui.export_service
 
             category = self.export_category.get()
             report = self.export_report.get()
 
-            # =========================
-            # INVENTORY EXPORTS
-            # =========================
+            # =====================================
+            # INVENTORY
+            # =====================================
 
             if category == "Inventory":
 
                 path = service.export_products()
 
-            # =========================
-            # SALES EXPORTS
-            # =========================
-
-            elif category == "Sales":
-
-                path = service.export_sales()
-
-            # =========================
-            # ACCOUNTING EXPORTS
-            # =========================
-
             else:
 
-                if report == "Daily Report":
+                # =====================================
+                # SALES
+                # =====================================
 
-                    data = self.ui.sale_service.get_daily_report()
+                if category == "Sales":
 
-                elif report == "Weekly Report":
+                    if report == "Daily Report":
 
-                    data = self.ui.sale_service.get_weekly_report()
+                        sales = (
+                            self.ui.sale_service
+                            .get_today_sales()
+                        )
 
-                elif report == "Monthly Report":
+                    elif report == "Weekly Report":
 
-                    data = self.ui.sale_service.get_monthly_report()
+                        sales = (
+                            self.ui.sale_service
+                            .get_week_sales()
+                        )
 
-                elif report == "Profit Report":
+                    elif report == "Monthly Report":
 
-                    data = self.ui.sale_service.get_profit_report()
+                        sales = (
+                            self.ui.sale_service
+                            .get_month_sales()
+                        )
 
-                elif report == "Top Selling Products":
+                    else:
 
-                    data = self.ui.sale_service.get_top_selling_report()
+                        sales = (
+                            self.ui.sale_service
+                            .get_sales_history()
+                        )
 
-                elif report == "Unsold Products":
+                    # =====================================
+                    # REGROUP SALES BY PRODUCT
+                    # =====================================
 
-                    data = self.ui.sale_service.get_unsold_report()
+                    sales_summary = {}
+
+                    for sale in sales:
+
+                        items = (
+                            self.ui.sale_service
+                            .sale_repository
+                            .get_sale_items(
+                                sale["id"]
+                            )
+                        )
+
+                        for item in items:
+
+                            product_name = item["product_name"]
+
+                            if product_name not in sales_summary:
+
+                                sales_summary[product_name] = {
+
+                                    "product":
+                                        product_name,
+
+                                    "quantity":
+                                        0,
+
+                                    "revenue":
+                                        0,
+
+                                    "profit":
+                                        0
+                                }
+
+                            # quantité totale vendue
+                            sales_summary[
+                                product_name
+                            ]["quantity"] += (
+                                item["quantity"]
+                            )
+
+                            # chiffre d'affaires
+                            sales_summary[
+                                product_name
+                            ]["revenue"] += (
+                                item["subtotal"]
+                            )
+
+                            # bénéfice réel
+                            product = (
+                                self.ui.sale_service
+                                .product_repository
+                                .get_by_id(
+                                    item["product_id"]
+                                )
+                            )
+
+                            if product:
+
+                                profit = (
+
+                                    (
+                                        product.selling_price
+                                        - product.purchase_price
+                                    )
+
+                                    * item["quantity"]
+                                )
+
+                                sales_summary[
+                                    product_name
+                                ]["profit"] += (
+                                    profit
+                                )
+
+                    rows = sorted(
+
+                        sales_summary.values(),
+
+                        key=lambda x:
+                            x["quantity"],
+
+                        reverse=True
+                    )
+
+                    data = {
+
+                        "title":
+                            report,
+
+                        "period":
+
+                            "Today"
+                            if report == "Daily Report"
+
+                            else
+
+                            "This Week"
+                            if report == "Weekly Report"
+
+                            else
+
+                            "This Month"
+                            if report == "Monthly Report"
+
+                            else
+
+                            "All Time",
+
+                        "items":
+                            rows
+                    }
+                # =====================================
+                # ACCOUNTING
+                # =====================================
 
                 else:
 
-                    raise Exception(
-                        "Unknown accounting report."
-                    )
+                    if report == "Daily Report":
 
-                import os
-                import csv
-                import json
-                from datetime import datetime
+                        data = (
+                            self.ui.sale_service
+                            .get_daily_report()
+                        )
+
+                    elif report == "Weekly Report":
+
+                        data = (
+                            self.ui.sale_service
+                            .get_weekly_report()
+                        )
+
+                    elif report == "Monthly Report":
+
+                        data = (
+                            self.ui.sale_service
+                            .get_monthly_report()
+                        )
+
+                    elif report == "Profit Report":
+
+                        data = (
+                            self.ui.sale_service
+                            .get_profit_report()
+                        )
+
+                    elif report == "Top Selling Products":
+
+                        data = (
+                            self.ui.sale_service
+                            .get_top_selling_report()
+                        )
+
+                    elif report == "Unsold Products":
+
+                        data = (
+                            self.ui.sale_service
+                            .get_unsold_report()
+                        )
+
+                    else:
+
+                        raise Exception(
+                            "Unknown report."
+                        )
+
+                # =====================================
+                # FILE CREATION
+                # =====================================
 
                 os.makedirs(
                     "exports",
@@ -396,13 +494,15 @@ class ExportView(BaseView):
                     "%Y-%m-%d_%H-%M-%S"
                 )
 
-                # =========================
+                # =====================================
                 # CSV
-                # =========================
+                # =====================================
 
                 if fmt == "CSV":
 
-                    path = f"exports/{filename}.csv"
+                    path = (
+                        f"exports/{filename}.csv"
+                    )
 
                     with open(
                         path,
@@ -413,36 +513,33 @@ class ExportView(BaseView):
 
                         writer = csv.writer(
                             f,
-                            delimiter=';'
+                            delimiter=";"
                         )
 
-                        if "items" in data:
+                        if (
+                            "items" in data
+                            and data["items"]
+                        ):
 
-                            if data["items"]:
+                            headers = list(
+                                data["items"][0].keys()
+                            )
 
-                                first = data["items"][0]
+                            writer.writerow(
+                                headers
+                            )
 
-                                if isinstance(first, dict):
+                            for row in data["items"]:
 
-                                    writer.writerow(
-                                        first.keys()
+                                writer.writerow([
+
+                                    row.get(
+                                        h,
+                                        ""
                                     )
 
-                                    for item in data["items"]:
-                                        writer.writerow(
-                                            item.values()
-                                        )
-
-                                else:
-
-                                    writer.writerow(
-                                        ["Product"]
-                                    )
-
-                                    for item in data["items"]:
-                                        writer.writerow(
-                                            [item.name]
-                                        )
+                                    for h in headers
+                                ])
 
                         else:
 
@@ -452,13 +549,15 @@ class ExportView(BaseView):
                                     [k, v]
                                 )
 
-                # =========================
+                # =====================================
                 # JSON
-                # =========================
+                # =====================================
 
                 elif fmt == "JSON":
 
-                    path = f"exports/{filename}.json"
+                    path = (
+                        f"exports/{filename}.json"
+                    )
 
                     with open(
                         path,
@@ -473,13 +572,15 @@ class ExportView(BaseView):
                             default=str
                         )
 
-                # =========================
+                # =====================================
                 # TXT
-                # =========================
+                # =====================================
 
                 else:
 
-                    path = f"exports/{filename}.txt"
+                    path = (
+                        f"exports/{filename}.txt"
+                    )
 
                     with open(
                         path,
@@ -487,11 +588,48 @@ class ExportView(BaseView):
                         encoding="utf-8"
                     ) as f:
 
-                        for k, v in data.items():
+                        if (
+                            "items" in data
+                            and data["items"]
+                        ):
+
+                            headers = list(
+                                data["items"][0].keys()
+                            )
 
                             f.write(
-                                f"{k}: {v}\n"
+                                "\t".join(
+                                    headers
+                                )
                             )
+
+                            f.write("\n")
+
+                            for row in data["items"]:
+
+                                f.write(
+                                    "\t".join(
+
+                                        str(
+                                            row.get(
+                                                h,
+                                                ""
+                                            )
+                                        )
+
+                                        for h in headers
+                                    )
+                                )
+
+                                f.write("\n")
+
+                        else:
+
+                            for k, v in data.items():
+
+                                f.write(
+                                    f"{k}: {v}\n"
+                                )
 
             self.status_label.configure(
                 text=f"Export successful: {path}"
